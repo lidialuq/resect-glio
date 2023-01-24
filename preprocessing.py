@@ -33,8 +33,8 @@ Usage:
 """
 
 root = '/mnt'
-scans = ['t1', 't1ce', 'flair', 't2']
-scans_seg = ['t1', 't1ce', 'flair', 't2', 'seg']
+scans = ['t1ce', 't1', 'flair', 't2']
+scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
 
 # call fslreorient2std from fsl docker
 def fsl_reorient(study_folder):
@@ -50,18 +50,22 @@ def resample_coregister(study_folder):
         nii = ants.image_read(nii)
         nii = ants.n3_bias_field_correction(nii)
         niis.append( ants.resample_image(nii,(1,1,1),False,0))
-    nii = os.path.join(study_folder, 'seg.nii.gz')
-    nii = ants.image_read(nii)
-    niis.append( ants.resample_image(nii,(1,1,1),False,0))
         
-    # cnt = 1
-    # for nii in niis[1:]:
-    #     ouput_path = os.path.join(study_folder, f'{scans[cnt]}.nii.gz')
-    #     final = ants.registration(fixed=niis[0], moving=nii, type_of_transform ='Affine')
-    #     ants.image_write(final['warpedmovout'], ouput_path)
-    #     cnt += 1
+    cnt = 1
+    for nii in niis[1:]:
+        ouput_path = os.path.join(study_folder, f'{scans[cnt]}.nii.gz')
+        final = ants.registration(fixed=niis[0], moving=nii, type_of_transform ='Affine')
+        ants.image_write(final['warpedmovout'], ouput_path)
+        cnt += 1
     ouput_path = os.path.join(study_folder, f'{scans[0]}.nii.gz')
     ants.image_write(niis[0], ouput_path)
+
+    # resample segmentation without registration
+    nii = os.path.join(study_folder, 'seg.nii.gz')
+    nii = ants.image_read(nii)
+    nii = ants.resample_image(nii,(1,1,1),False,0)
+    ouput_path = os.path.join(study_folder, f'seg.nii.gz')
+    ants.image_write(nii, ouput_path)
     
     
 def move_T1_bet(mode, root):

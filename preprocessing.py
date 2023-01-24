@@ -15,7 +15,7 @@ from fsl.wrappers import fslreorient2std
 import subprocess
 from datetime import datetime
 from operator import itemgetter
-
+import sys
 
 """ This script contains all functions needed to preprocess brain MRI by:
     -Reorienting to STD
@@ -32,6 +32,7 @@ Usage:
     
 """
 
+root = sys.argv[1]
 scans = ['t1', 't1ce', 'flair', 't2']
 scans_seg = scans.append['seg']
 
@@ -149,7 +150,6 @@ def apply_mask(study_folder):
 
 ############################################################################################
 
-root = '/home/lidia/CRAI-NAS/all/lidfer/Datasets/BrainPower/extra'
 study_folders = glob.glob(os.path.join(root, '*', '*'))
 
 # Do all preprocessing but skull-stripping

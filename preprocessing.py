@@ -98,6 +98,7 @@ def move_T1_bet(mode, root):
         files = glob.glob(os.path.join(tmp_folder_o, '*'))
         for file in files: 
             filename = os.path.basename(file)
+            print(filename)
             code = filename.split('-')[1].split('.')[0]
             os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):
@@ -154,7 +155,7 @@ study_folders = glob.glob(os.path.join(root, '*'))
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
-print('\n\n' + '*'*120)
+print('*'*120)
 print('Starting preprocessing. This will take between 1-6 min per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
@@ -169,7 +170,7 @@ for idx, study_folder in enumerate(study_folders):
 
 print('\n\n' + '*'*120)
 print('Starting skull-stripping. This will take 20-40 sec per patient.')
-print('*'*100 + '\n')
+print('*'*120 + '\n')
 
 move_T1_bet('move', root)
 call_hdbet(root)

@@ -89,31 +89,28 @@ def move_T1_bet(mode, root):
         os.makedirs(tmp_folder_o)
 
         for study_folder in study_folders:
-            code = os.path.split(os.path.split(study_folder)[0])[1]
-            date = os.path.split(study_folder)[1]
-            src = os.path.join(study_folder, "T1.nii.gz")
-            dst = os.path.join(tmp_folder_i, f'T1-{code}-{date}.nii.gz' )
+            code = os.path.split(study_folder)[1]
+            src = os.path.join(study_folder, "t1.nii.gz")
+            dst = os.path.join(tmp_folder_i, f't1-{code}.nii.gz' )
             os.rename(src, dst)
     elif mode == 'unmove':
         # Move mask and already brain extracted T1 image to root (in others folder)
         files = glob.glob(os.path.join(tmp_folder_o, '*'))
         for file in files: 
             filename = os.path.basename(file)
-            code = filename.split('-')[1]
-            date = filename.split('-')[2][0:8]
-            os.makedirs(os.path.join(root, code, date, 'others'), exist_ok=True)
+            code = filename.split('-')[1].split('.')[0]
+            os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):
-                dst = os.path.join(root, code, date, 'others', 'T1_mask.nii.gz')
+                dst = os.path.join(root, code, 'others', 't1_mask.nii.gz')
             else: 
-                dst = os.path.join(root, code, date, 'others', 'T1_brain.nii.gz')
+                dst = os.path.join(root, code, 'others', 't1_brain.nii.gz')
             os.rename(file, dst)
         # Move original T1 files back to root
         files = glob.glob(os.path.join(tmp_folder_i, '*'))
         for file in files: 
             filename = os.path.basename(file)
-            code = filename.split('-')[1]
-            date = filename.split('-')[2][0:8]
-            dst = os.path.join(root, code, date, 'T1.nii.gz')
+            code = filename.split('-')[1].split('.')[0]
+            dst = os.path.join(root, code, 't1.nii.gz')
             os.rename(file, dst)
         
         os.rmdir(tmp_folder_i)

@@ -100,6 +100,7 @@ def move_T1_bet(mode, root):
             filename = os.path.basename(file)
             print(filename)
             code = filename.split('-')[1].split('.')[0]
+            print('here' + code)
             os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):
                 dst = os.path.join(root, code, 'others', 't1_mask.nii.gz')
@@ -123,7 +124,8 @@ def call_hdbet(folder):
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     if output or error:
-        print(output, error)
+        print(output)
+        print(error)
 
 def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull

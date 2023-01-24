@@ -162,7 +162,7 @@ print('*'*120 + '\n')
 for idx, study_folder in enumerate(study_folders):
     print(idx)
     print(study_folder)
-    fsl_reorient(study_folder)
+    #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 
 # Skull-stripping with hd-bet, including moving images to file format

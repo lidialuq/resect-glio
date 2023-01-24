@@ -150,7 +150,7 @@ def apply_mask(study_folder):
 
 ############################################################################################
 
-study_folders = glob.glob(os.path.join(root, '*', '*'))
+study_folders = glob.glob(os.path.join(root, '*'))
 
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 

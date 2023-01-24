@@ -158,12 +158,12 @@ study_folders = glob.glob(os.path.join(root, '*'))
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
-print('*'*120)
+print('\n' + '*'*120)
 print('Starting preprocessing. This will take between 1-6 min per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
-    print(f'{idx+1}: ' + study_folder)
+    print(f'{idx+1}/{len(study_folders)}: ' + study_folder)
     #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 
@@ -186,7 +186,7 @@ print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
     if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
-        print(f'{idx+1}: ' + study_folder)
+        print(f'{idx+1}/{len(study_folders)}: ' + study_folder)
         move_to_others(study_folder)
         apply_mask(study_folder)
 

@@ -121,10 +121,8 @@ def call_hdbet(folder):
     cmd = f'hd-bet -i {folder}/tmp_bet/i -o {folder}/tmp_bet/o -device 0'
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-    if output: 
-        print(output)
-    if error:
-        print(error)
+    if output or error:
+        print(output, error)
 
 def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull
@@ -133,8 +131,8 @@ def move_to_others(study_folder):
         src = os.path.join(study_folder, seq+'.nii.gz')
         dst = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
         os.rename(src, dst)
-    src =  os.path.join(study_folder, 'others', 'T1_brain.nii.gz')
-    dst = os.path.join(study_folder, 'T1_brain.nii.gz')
+    src =  os.path.join(study_folder, 'others', 't1_brain.nii.gz')
+    dst = os.path.join(study_folder, 't1_brain.nii.gz')
     os.rename(src, dst)               
     
 def apply_mask(study_folder):

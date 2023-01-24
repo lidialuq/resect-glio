@@ -32,7 +32,7 @@ Usage:
     
 """
 
-root = sys.argv[1]
+root = '/mnt'
 scans = ['t1', 't1ce', 'flair', 't2']
 scans_seg = scans.append['seg']
 

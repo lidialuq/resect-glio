@@ -136,7 +136,7 @@ def move_to_others(study_folder):
         dst = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
         os.rename(src, dst)
     src =  os.path.join(study_folder, 'others', 't1_brain.nii.gz')
-    dst = os.path.join(study_folder, 't1_brain.nii.gz')
+    dst = os.path.join(study_folder, 't1.nii.gz')
     os.rename(src, dst)               
     
 def apply_mask(study_folder):
@@ -144,7 +144,7 @@ def apply_mask(study_folder):
     mask = os.path.join(study_folder, 'others', 't1_mask.nii.gz')
     mask = ants.image_read(mask)
     for seq in scans_seg: 
-        output_path = os.path.join(study_folder, seq+'_brain.nii.gz')
+        output_path = os.path.join(study_folder, seq+'.nii.gz')
         nii = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
         nii = ants.image_read(nii)
         brain = ants.mask_image(nii, mask)

@@ -34,7 +34,7 @@ Usage:
 
 root = '/mnt'
 scans = ['t1', 't1ce', 'flair', 't2']
-scans_seg = scans.append('seg')
+scans_seg = ['t1', 't1ce', 'flair', 't2', 'seg']
 
 # call fslreorient2std from fsl docker
 def fsl_reorient(study_folder):
@@ -155,9 +155,9 @@ study_folders = glob.glob(os.path.join(root, '*', '*'))
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
-print('\n\n' + '*'*100)
+print('\n\n' + '*'*120)
 print('Starting preprocessing. This will take between 1-6 min per patient depending on the original resolution of the data.')
-print('*'*100 + '\n')
+print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
     print(idx)
@@ -168,7 +168,7 @@ for idx, study_folder in enumerate(study_folders):
 # Skull-stripping with hd-bet, including moving images to file format
 # that hd-bet can read (and back)
 
-print('\n\n' + '*'*100)
+print('\n\n' + '*'*120)
 print('Starting skull-stripping. This will take 20-40 sec per patient.')
 print('*'*100 + '\n')
 
@@ -178,9 +178,9 @@ move_T1_bet('unmove', root)
 
 # Apply brain mask from hd-bet to other sequences
 
-print('\n\n' + '*'*100)
+print('\n\n' + '*'*120)
 print(' Apply brain mask from hd-bet to other sequences. This will take 5-7 sec per patient.')
-print('*'*100 + '\n')
+print('*'*120 + '\n')
 
 for study_folder in study_folders:
     if not os.path.exists(os.path.join(study_folder, 'T1_brain.nii.gz')):

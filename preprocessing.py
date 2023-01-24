@@ -80,7 +80,7 @@ def move_T1_bet(mode, root):
         -hd-bet -i [root]/tmp_bet/i -o [root]/tmp_bet/o -device [int]
         -From this script, run move_T1_bet('unmove', root) 
     """    
-    study_folders = glob.glob(os.path.join(root, '*', '*'))
+    study_folders = glob.glob(os.path.join(root, '*'))
     tmp_folder_i = os.path.join(root, 'tmp_bet', 'i')
     tmp_folder_o = os.path.join(root, 'tmp_bet', 'o')
 

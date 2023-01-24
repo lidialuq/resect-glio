@@ -127,6 +127,8 @@ def call_hdbet(folder):
     if output or error:
         print(output)
         print(error)
+    if output: 
+        print(output.decode('ascii'))
 
 def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull

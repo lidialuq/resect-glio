@@ -101,7 +101,6 @@ def move_T1_bet(mode, root):
             code = filename.split('-')[1].split('.')[0]
             if code.endswith('_mask'):
                 code = code[:-5]
-            print('here' + code)
             os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):
                 dst = os.path.join(root, code, 'others', 't1_mask.nii.gz')
@@ -124,11 +123,10 @@ def call_hdbet(folder):
     cmd = f'hd-bet -i {folder}/tmp_bet/i -o {folder}/tmp_bet/o -device 0'
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-    if output or error:
-        print(output)
-        print(error)
     if output: 
         print(output.decode('ascii'))
+    if error: 
+        print(error.decode('ascii'))
 
 def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull
@@ -165,8 +163,7 @@ print('Starting preprocessing. This will take between 1-6 min per patient depend
 print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
-    print(idx)
-    print(study_folder)
+    print(f'{idx+1}: ' + study_folder)
     #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 
@@ -187,9 +184,9 @@ print('\n\n' + '*'*120)
 print(' Apply brain mask from hd-bet to other sequences. This will take 5-7 sec per patient.')
 print('*'*120 + '\n')
 
-for study_folder in study_folders:
+for idx, study_folder in enumerate(study_folders):
     if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
-        print(study_folder)
+        print(f'{idx+1}: ' + study_folder)
         move_to_others(study_folder)
         apply_mask(study_folder)
 

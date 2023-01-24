@@ -98,8 +98,9 @@ def move_T1_bet(mode, root):
         files = glob.glob(os.path.join(tmp_folder_o, '*'))
         for file in files: 
             filename = os.path.basename(file)
-            print(filename)
             code = filename.split('-')[1].split('.')[0]
+            if code.endswith('_mask'):
+                code = code[:-5]
             print('here' + code)
             os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):

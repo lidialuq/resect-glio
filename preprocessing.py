@@ -34,7 +34,7 @@ Usage:
 
 root = '/mnt'
 scans = ['t1', 't1ce', 'flair', 't2']
-scans_seg = scans.append['seg']
+scans_seg = scans.append('seg')
 
 # call fslreorient2std from fsl docker
 def fsl_reorient(study_folder):

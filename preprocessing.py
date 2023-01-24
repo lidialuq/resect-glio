@@ -32,30 +32,34 @@ Usage:
     
 """
 
-scans_seq = ['T1', 'T1c', 'Flair', 'T2']
+scans = ['t1', 't1ce', 'flair', 't2']
+scans_seg = scans.append['seg']
 
 # call fslreorient2std from fsl docker
 def fsl_reorient(study_folder):
-    for seq in scans_seq: 
+    for seq in scans_seg: 
         nii_path = os.path.join(study_folder, seq+'.nii.gz')
         fslreorient2std(nii_path, nii_path)
             
 # Bias correction, resample and co-register
 def resample_coregister(study_folder):
     niis = []
-    for seq in scans_seq: 
+    for seq in scans: 
         nii = os.path.join(study_folder, seq+'.nii.gz')
         nii = ants.image_read(nii)
         nii = ants.n3_bias_field_correction(nii)
         niis.append( ants.resample_image(nii,(1,1,1),False,0))
+    nii = os.path.join(study_folder, 'seg.nii.gz')
+    nii = ants.image_read(nii)
+    niis.append( ants.resample_image(nii,(1,1,1),False,0))
         
-    cnt = 1
-    for nii in niis[1:]:
-        ouput_path = os.path.join(study_folder, f'{scans_seq[cnt]}.nii.gz')
-        final = ants.registration(fixed=niis[0], moving=nii, type_of_transform ='Affine')
-        ants.image_write(final['warpedmovout'], ouput_path)
-        cnt += 1
-    ouput_path = os.path.join(study_folder, f'{scans_seq[0]}.nii.gz')
+    # cnt = 1
+    # for nii in niis[1:]:
+    #     ouput_path = os.path.join(study_folder, f'{scans[cnt]}.nii.gz')
+    #     final = ants.registration(fixed=niis[0], moving=nii, type_of_transform ='Affine')
+    #     ants.image_write(final['warpedmovout'], ouput_path)
+    #     cnt += 1
+    ouput_path = os.path.join(study_folder, f'{scans[0]}.nii.gz')
     ants.image_write(niis[0], ouput_path)
     
     
@@ -123,7 +127,7 @@ def call_hdbet(folder):
 def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull
     stripped"""
-    for seq in scans_seq: 
+    for seq in scans_seg: 
         src = os.path.join(study_folder, seq+'.nii.gz')
         dst = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
         os.rename(src, dst)
@@ -135,7 +139,7 @@ def apply_mask(study_folder):
     """ Skull-strip by appling mask created by hd-bet"""
     mask = os.path.join(study_folder, 'others', 'T1_mask.nii.gz')
     mask = ants.image_read(mask)
-    for seq in scans_seq: 
+    for seq in scans_seg: 
         output_path = os.path.join(study_folder, seq+'_brain.nii.gz')
         nii = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
         nii = ants.image_read(nii)

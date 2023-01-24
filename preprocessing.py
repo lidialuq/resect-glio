@@ -137,7 +137,7 @@ def move_to_others(study_folder):
     
 def apply_mask(study_folder):
     """ Skull-strip by appling mask created by hd-bet"""
-    mask = os.path.join(study_folder, 'others', 'T1_mask.nii.gz')
+    mask = os.path.join(study_folder, 'others', 't1_mask.nii.gz')
     mask = ants.image_read(mask)
     for seq in scans_seg: 
         output_path = os.path.join(study_folder, seq+'_brain.nii.gz')
@@ -182,7 +182,7 @@ print(' Apply brain mask from hd-bet to other sequences. This will take 5-7 sec 
 print('*'*120 + '\n')
 
 for study_folder in study_folders:
-    if not os.path.exists(os.path.join(study_folder, 'T1_brain.nii.gz')):
+    if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
         print(study_folder)
         move_to_others(study_folder)
         apply_mask(study_folder)

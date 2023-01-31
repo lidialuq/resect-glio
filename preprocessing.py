@@ -26,8 +26,6 @@ import argparse
     -Skull-stripping using hd-bet
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('-input', type=str, required=True)
-parser.add_argument('-device', type=str, default='cuda:0')
 
 root = parser.parse_args().input
 device = parser.parse_args().device

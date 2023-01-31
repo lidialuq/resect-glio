@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import torch
 import monai.transforms as trans
-from transforms import ConvertToMultiChannel
+from .transforms import ConvertToMultiChannel
 
 
 def get_transforms(label=True):

@@ -25,7 +25,7 @@ import argparse
     -Corregistering (affine)
     -Skull-stripping using hd-bet
 """
-
+root = '/mnt'
 scans = ['t1ce', 't1', 'flair', 't2']
 scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
 

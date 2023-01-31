@@ -31,14 +31,11 @@ from helpers.network import Network
 from preprocessing import move_T1_bet, move_to_others, apply_mask
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-input', type=str, required=True)
-parser.add_argument('-output', type=str, required=True)
+
 parser.add_argument(-batch_size, type=int, default=4)
 parser.add_argument(-num_workers, type=int, default=4)
 parser.add_argument('-device', type=str, default='cuda:0')
 
-input_path = parser.parse_args().input
-output_path = parser.parse_args().output
 batch_size = parser.parse_args().batch_size
 num_workers = parser.parse_args().num_workers
 device = parser.parse_args().device

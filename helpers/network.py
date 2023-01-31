@@ -11,7 +11,6 @@ class Network(nn.Module):
     def __init__(self, 
                  in_channels: int, 
                  out_channels: int,
-                 img_size: Tuple,
                  ):
         super(Network, self).__init__()
 

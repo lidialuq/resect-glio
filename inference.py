@@ -14,6 +14,7 @@ from tqdm import tqdm
 import nibabel as nib
 import typing
 import glob
+import argparse
 
 import torch
 from torch.nn import Softmax
@@ -25,9 +26,22 @@ from monai.metrics import DiceMetric
 from monai import metrics
 
 from helpers.transforms_config import get_transforms
-from helpers.dataloader import BrainpowerDatasetTSD
+from helpers.dataloader import GbmDataset
 from helpers.network import Network
 from preprocessing import move_T1_bet, move_to_others, apply_mask
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-input', type=str, required=True)
+parser.add_argument('-output', type=str, required=True)
+parser.add_argument(-batch_size, type=int, default=4)
+parser.add_argument(-num_workers, type=int, default=4)
+parser.add_argument('-device', type=str, default='cuda:0')
+
+input_path = parser.parse_args().input
+output_path = parser.parse_args().output
+batch_size = parser.parse_args().batch_size
+num_workers = parser.parse_args().num_workers
+device = parser.parse_args().device
 
 '''
 Predict on Brainpower using an ensamble of 5 supervised or semi-supervised models.
@@ -86,8 +100,9 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
             shape is (x,y,z) for both
     """
     # usefull definitions
-    inferer = SlidingWindowInferer((128,128,128), sw_batch_size=4, overlap=0.25, mode='gaussian')
+    inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
     softmax = Softmax(dim=1)
+    metric = DiceMetric(include_background=False, reduction='none', ignore_empty=False)
     # do inference for all models, then ensable
     input_volume = data["image"].to(config['device'])
     ensamble = []
@@ -105,11 +120,18 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     # ensamble
     ensambled_output = torch.mean(torch.stack(ensamble), dim=0)
     output = torch.argmax(ensambled_output, dim=1)
+    if config['label']:
+        label = data["label"].to(config['device'])
+        print(output.shape, label.shape)
+        dice = metric(output, label)
+
+    volume = np.count_nonzero(prediction == 1)/1000
+
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()
     prediction = output.squeeze().detach().cpu().numpy().astype('float32') 
     ensambled_output = ensambled_output.squeeze()[1].detach().cpu().numpy().astype('float32') #[1] to exclude background
 
-    return (prediction, ensambled_output) # shapes are (x,y,z)
+    return prediction, ensambled_output, dice, volume # shapes are (x,y,z)
 
 
 
@@ -126,7 +148,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     original_nii_path = join(data['path'][0], f"T1_brain.nii.gz")
     original_nii = nib.load(original_nii_path)
     # make folder in predictions_folder with subject name
-    subject_folder = join(config['save_folder'], data['subject'][0])
+    subject_folder = join(config['output_path'], data['subject'][0])
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
     # save original images (must be saved again because of removing 0s)
@@ -141,78 +163,49 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     nib.save(prediction_nii, join(subject_folder, save_file_name))
 
 
-def get_volumes(prediction: np.array, data: dict, metrics_dic:dict) -> dict:
-    """Calculate volumes for each class. Output as an update to metrics_dic.
-    Args:
-        prediction (numpy array): prediction after argmax
-        metrics_dic (dict): dict with metrics to update
-    Returns:
-        metrics_dic (dict): updated dict with metrics to update
-    """
-    # calculate volumes
-    volumes = []
-    for i, _ in enumerate(['edema', 'enhancing']):
-        volumes.append(np.count_nonzero(prediction == i+1))
-    # update metrics_dic
-    metrics_dic['edema_volume'].append(volumes[0])
-    metrics_dic['enhancing_volume'].append(volumes[1])
-    metrics_dic['subjects'].append(data['subject'][0])
-
-    return metrics_dic
-
-def make_save_folder(config):
-    """Make save folder for predictions and metrics
-    Args:
-        config (dict): config dictionary
-    """
-    # make save folder
-    if config['semisup']:
-        save_folder = join(config['predictions_folder'], f'semisup')
-    else:
-        save_folder = join(config['predictions_folder'], f'sup')
-    if not os.path.exists(save_folder): os.mkdir(save_folder) 
-    return save_folder
-
 
 
 # Path to models and config
-model_path_enhancing = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
+model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k1/2022-12-01/epoch_1000/checkpoint-epoch1000.pth',
                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k2/2022-12-02/epoch_1000/checkpoint-epoch1000.pth',
                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k3/2022-12-03/epoch_1000/checkpoint-epoch1000.pth',
                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k4/2022-12-05/epoch_1000/checkpoint-epoch1000.pth']
 
-config = {'device': torch.device('cuda:1'),
+config = {'device': torch.device(device),
           'semisup': True, 
           'sequences': ['T1', 'T1c', 'Flair', 'T2'],
-          'predictions_folder': '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/predictions/eduardo_second',
-          'data_folder': '/mnt/CRAI-NAS/all/lidfer/Datasets/BrainPower',
+          'output_path': output_path,
+          'input_path': input_path,
           'out_channels': 2,
+          'label': True,
          }    
-config['save_folder'] = make_save_folder(config)
+if not os.path.exists(config['output_path']):
+    os.mkdir(config['output_path'])
 
-metrics_dic = {'edema_volume': list(),
-            'enhancing_volume': list(),
+metrics_dic = {'volume': list(),
+            'dice': list(),
             'subjects': list()}
 
 # Load dataset
-transform = get_transforms('brainpower', split='infer', label=False, resample=False)
-test_ds = BrainpowerDatasetTSD(config['data_folder'], data_type='all_48h_preop',
-                            transform=transform, split='infer',
-                            kfold=None, input=['T1', 'T1c', 'Flair', 'T2'])
-val_loader = DataLoader(test_ds, batch_size=1, num_workers=4)    
+transform = get_transforms(label=False)
+test_ds = GbmDataset(config['input_path'], label=config['label'], transform=transform, input=config['sequences'])
+test_loader = DataLoader(test_ds, batch_size=1, num_workers=num_workers)    
 
+# Load models
+models = load_models(model_path, config)
+
+metrics_dic = {'volume': list(),
+                'dice': list(),
+                'subject': list()}
 
 # Do inference
-for data in tqdm(val_loader):
-    models_edema = load_models(model_path_edema, config)
-    models_enhancing = load_models(model_path_enhancing, config)
-    prediction_edema = infer_one_with_ensable(models_edema, data, config)
-    prediction_enhancing = infer_one_with_ensable(models_enhancing, data, config)
-    prediction = combine_predictions(prediction_edema, prediction_enhancing)
-    metrics_dic = get_volumes(prediction, data, metrics_dic)
+for data in tqdm(test_loader):
+    prediction, _, dice, volume = infer_one_with_ensable(models, data, config)
     save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')
-    
+    metrics_dic['volume'].append(volume)
+    metrics_dic['dice'].append(dice)
+    metrics_dic['subject'].append(data['subject'][0])
 
 # Save metrics
 with open(join(config['save_folder'], 'test_metrics.pth'), 'wb') as f:

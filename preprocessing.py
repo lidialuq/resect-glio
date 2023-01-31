@@ -16,23 +16,22 @@ import subprocess
 from datetime import datetime
 from operator import itemgetter
 import sys
+import argparse
 
 """ This script contains all functions needed to preprocess brain MRI by:
     -Reorienting to STD
     -Doing bias correction
     -Resampling to 1,1,1mm voksels
     -Corregistering (affine)
-    -Skull-stripping
-    
-Usage: 
-    Before using this script, use copy_seq() in copy_files.py to copy anatomic
-    files to new folder for preprocessing.
-    Follow Step 1 and Step 2 at the bottom of the script. See move_T1_bet for 
-    more info
-    
+    -Skull-stripping using hd-bet
 """
+parser = argparse.ArgumentParser()
+parser.add_argument('-input', type=str, required=True)
+parser.add_argument('-device', type=str, default='cuda:0')
 
-root = '/mnt'
+root = parser.parse_args().input
+device = parser.parse_args().device
+
 scans = ['t1ce', 't1', 'flair', 't2']
 scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
 
@@ -159,7 +158,7 @@ study_folders = glob.glob(os.path.join(root, '*'))
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
 print('\n' + '*'*120)
-print('Starting preprocessing. This will take between 1-6 min per patient depending on the original resolution of the data.')
+print('Start preprocessing. This can take a few minutes per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
@@ -171,7 +170,7 @@ for idx, study_folder in enumerate(study_folders):
 # that hd-bet can read (and back)
 
 print('\n\n' + '*'*120)
-print('Starting skull-stripping. This will take 20-40 sec per patient.')
+print('Start skull-stripping. This will take a few seconds per patient.')
 print('*'*120 + '\n')
 
 move_T1_bet('move', root)
@@ -181,7 +180,7 @@ move_T1_bet('unmove', root)
 # Apply brain mask from hd-bet to other sequences
 
 print('\n\n' + '*'*120)
-print(' Apply brain mask from hd-bet to other sequences. This will take 5-7 sec per patient.')
+print('Apply brain mask from hd-bet to other sequences.')
 print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):

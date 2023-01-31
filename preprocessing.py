@@ -25,10 +25,6 @@ import argparse
     -Corregistering (affine)
     -Skull-stripping using hd-bet
 """
-parser = argparse.ArgumentParser()
-
-root = parser.parse_args().input
-device = parser.parse_args().device
 
 scans = ['t1ce', 't1', 'flair', 't2']
 scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']

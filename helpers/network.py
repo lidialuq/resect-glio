@@ -5,8 +5,6 @@ import torch
 import torch.nn as nn
 from monai.networks.nets import DynUNet
 
-from torchsummary import summary
-
 class Network(nn.Module):
     def __init__(self, 
                  in_channels: int, 
@@ -64,7 +62,5 @@ if __name__ == '__main__':
     model = Network(4, 4, (128,128,128)).to(device)
     left = torch.randn(2, 4, 128, 128, 128).to(device)
     right = torch.randn(2, 4, 128, 128, 128).to(device)
-    # summary requires input tensor without batch channel
-    summary(model, (4, 128, 128, 128))
     out = model(left)
     print(f'Output shape: {out.shape}')

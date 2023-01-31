@@ -166,17 +166,23 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
 
 
 # Path to models and config
-model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
-                '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k1/2022-12-01/epoch_1000/checkpoint-epoch1000.pth',
-                '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k2/2022-12-02/epoch_1000/checkpoint-epoch1000.pth',
-                '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k3/2022-12-03/epoch_1000/checkpoint-epoch1000.pth',
-                '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k4/2022-12-05/epoch_1000/checkpoint-epoch1000.pth']
+# model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
+#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k1/2022-12-01/epoch_1000/checkpoint-epoch1000.pth',
+#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k2/2022-12-02/epoch_1000/checkpoint-epoch1000.pth',
+#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k3/2022-12-03/epoch_1000/checkpoint-epoch1000.pth',
+#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k4/2022-12-05/epoch_1000/checkpoint-epoch1000.pth']
+
+model_path = ['/opt/seg-pipeline/semisup_97_k0.pth',
+                '/opt/seg-pipeline/semisup_97_k1.pth',
+                '/opt/seg-pipeline/semisup_97_k2.pth',
+                '/opt/seg-pipeline/semisup_97_k3.pth',
+                '/opt/seg-pipeline/semisup_97_k4.pth']
 
 config = {'device': torch.device(device),
           'semisup': True, 
           'sequences': ['T1', 'T1c', 'Flair', 'T2'],
-          'output_path': output_path,
-          'input_path': input_path,
+          'output_path': '/mnt',
+          'input_path': '/mnt',
           'out_channels': 2,
           'label': True,
          }    
@@ -208,7 +214,7 @@ for data in tqdm(test_loader):
     metrics_dic['subject'].append(data['subject'][0])
 
 # Save metrics
-with open(join(config['save_folder'], 'test_metrics.pth'), 'wb') as f:
+with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
     pickle.dump(metrics_dic, f)
 print(metrics_dic)
 

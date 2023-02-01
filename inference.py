@@ -39,14 +39,13 @@ batch_size = parser.parse_args().batch_size
 num_workers = parser.parse_args().num_workers
 device = parser.parse_args().device
 
-print('hello')
 '''
 Predict on Brainpower using an ensamble of 5 supervised or semi-supervised models.
 Make sure that the output_classses are the same as the ones used for training, for example:
 output_classes = ['edema', 'enhancing'] means edema=1 and enhancing=2 in the prediction. Background is 0.
 '''
 
-'''
+
 def load_models(model_list: list, config: dict) -> list:
     """Load models from model_list
     Args:
@@ -216,4 +215,3 @@ with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
 print(metrics_dic)
 
         
-'''

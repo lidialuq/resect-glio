@@ -56,7 +56,7 @@ def resample_coregister(study_folder):
     # resample segmentation without registration
     nii = os.path.join(study_folder, 'seg.nii.gz')
     nii = ants.image_read(nii)
-    nii = ants.resample_image(nii,(1,1,1),False,2)
+    nii = ants.resample_image(nii,(1,1,1),False,0)
     ouput_path = os.path.join(study_folder, f'seg.nii.gz')
     ants.image_write(nii, ouput_path)
     

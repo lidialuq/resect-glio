@@ -57,7 +57,7 @@ def load_models(model_list: list, config: dict) -> list:
     models = []
     for k in range(len(model_list)):
         if config['semisup']:
-            model = Network(len(config['sequences']), config['out_channels'], (128,128,128))
+            model = Network(len(config['sequences']), config['out_channels'])
             semisup_model = model_list[k] 
             model.load_state_dict(torch.load(semisup_model, map_location=torch.device('cpu'))['state_dict'])
             model.to(config['device'])

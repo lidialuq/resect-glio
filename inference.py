@@ -157,6 +157,8 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     prediction = torch.from_numpy(prediction).unsqueeze(0)
     assert prediction.dim() == data['label'].dim(), 'Prediction and label needs to have the same dimensions'
     print(data.keys())
+    print(data['foreground_start_coord'])
+    print(data['foreground_end_coord'])
     prediction = invtrans_prediction(prediction, data)
     print(prediction.shape)
     '''

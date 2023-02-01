@@ -121,6 +121,7 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
         output = output.unsqueeze(0)
         # assert that dim label is 5 else write dim
         assert label.dim() == 5, 'Label needs to be BxCxDxHxW. Something might be wrong with the preprocessing.'
+        assert prediction.dim() == 5, 'Prediction needs to be BxCxDxHxW'
         dice_metric(output, label)
         dice = dice_metric.aggregate().item()
         dice_metric.reset()
@@ -158,7 +159,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     assert prediction.dim() == data['label'].dim(), 'Prediction and label needs to have the same dimensions'
     prediction = invtrans_prediction(prediction, data)
     print(prediction.shape)
-    
+
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')
     print(orig_data.shape)

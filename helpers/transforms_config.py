@@ -43,6 +43,8 @@ def invtrans_prediction(prediction, data):
         trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=False),   
         trans.SpatialPadd(keys=["image", "label"], spatial_size=(128,128,128), mode='constant'),
         ])
+    print(prediction.shape)
+    print(data["label"].shape)
     transformed_data = transform(data)
     prediction.applied_operations = transformed_data["label"].applied_operations
     seg_dict = {"label": prediction}

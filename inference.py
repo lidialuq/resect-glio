@@ -141,7 +141,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
         save_file_name (str): name to save the prediction, include .nii.gz
     """
     # open header from original image
-    original_nii_path = join(data['path'][0], f"T1_brain.nii.gz")
+    original_nii_path = join(data['path'][0], f"t1.nii.gz")
     original_nii = nib.load(original_nii_path)
     # make folder in predictions_folder with subject name
     subject_folder = join(config['output_path'], data['subject'][0])

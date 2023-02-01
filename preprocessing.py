@@ -28,12 +28,6 @@ import argparse
 root = '/mnt'
 scans = ['t1ce', 't1', 'flair', 't2']
 scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
-
-# call fslreorient2std from fsl docker
-def fsl_reorient(study_folder):
-    for seq in scans_seg: 
-        nii_path = os.path.join(study_folder, seq+'.nii.gz')
-        fslreorient2std(nii_path, nii_path)
             
 # Bias correction, resample and co-register
 def resample_coregister(study_folder):
@@ -46,18 +40,18 @@ def resample_coregister(study_folder):
         
     cnt = 1
     for nii in niis[1:]:
-        ouput_path = os.path.join(study_folder, f'{scans[cnt]}.nii.gz')
+        ouput_path = os.path.join(study_folder, 'preprocessed', f'{scans[cnt]}.nii.gz')
         final = ants.registration(fixed=niis[0], moving=nii, type_of_transform ='Affine')
         ants.image_write(final['warpedmovout'], ouput_path)
         cnt += 1
-    ouput_path = os.path.join(study_folder, f'{scans[0]}.nii.gz')
+    ouput_path = os.path.join(study_folder, 'preprocessed', f'{scans[0]}.nii.gz')
     ants.image_write(niis[0], ouput_path)
 
     # resample segmentation without registration
     nii = os.path.join(study_folder, 'seg.nii.gz')
     nii = ants.image_read(nii)
     nii = ants.resample_image(nii,(1,1,1),False,0)
-    ouput_path = os.path.join(study_folder, f'seg.nii.gz')
+    ouput_path = os.path.join(study_folder, 'preprocessed', f'seg.nii.gz')
     ants.image_write(nii, ouput_path)
     
     
@@ -74,6 +68,7 @@ def move_T1_bet(mode, root):
         -From this script, run move_T1_bet('unmove', root) 
     """    
     study_folders = glob.glob(os.path.join(root, '*'))
+    study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
     tmp_folder_i = os.path.join(root, 'tmp_bet', 'i')
     tmp_folder_o = os.path.join(root, 'tmp_bet', 'o')
 
@@ -83,7 +78,7 @@ def move_T1_bet(mode, root):
 
         for study_folder in study_folders:
             code = os.path.split(study_folder)[1]
-            src = os.path.join(study_folder, "t1.nii.gz")
+            src = os.path.join(study_folder, "preprocessed", "t1.nii.gz")
             dst = os.path.join(tmp_folder_i, f't1-{code}.nii.gz' )
             os.rename(src, dst)
     elif mode == 'unmove':
@@ -94,18 +89,18 @@ def move_T1_bet(mode, root):
             code = filename.split('-')[1].split('.')[0]
             if code.endswith('_mask'):
                 code = code[:-5]
-            os.makedirs(os.path.join(root, code, 'others'), exist_ok=True)
+            os.makedirs(os.path.join(root, code, 'preprocessed', 'others'), exist_ok=True)
             if file.endswith('mask.nii.gz'):
-                dst = os.path.join(root, code, 'others', 't1_mask.nii.gz')
+                dst = os.path.join(root, code, 'preprocessed', 'others', 't1_mask.nii.gz')
             else: 
-                dst = os.path.join(root, code, 'others', 't1_brain.nii.gz')
+                dst = os.path.join(root, code, 'preprocessed', 'others', 't1_brain.nii.gz')
             os.rename(file, dst)
         # Move original T1 files back to root
         files = glob.glob(os.path.join(tmp_folder_i, '*'))
         for file in files: 
             filename = os.path.basename(file)
             code = filename.split('-')[1].split('.')[0]
-            dst = os.path.join(root, code, 't1.nii.gz')
+            dst = os.path.join(root, code, 'preprocessed', 't1.nii.gz')
             os.rename(file, dst)
         
         os.rmdir(tmp_folder_i)
@@ -125,20 +120,20 @@ def move_to_others(study_folder):
     """Move non skull-stripped files to others folder to make place for skull
     stripped"""
     for seq in scans_seg: 
-        src = os.path.join(study_folder, seq+'.nii.gz')
-        dst = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
+        src = os.path.join(study_folder, 'preprocessed', seq+'.nii.gz')
+        dst = os.path.join(study_folder, 'preprocessed', 'others', seq+'_head.nii.gz')
         os.rename(src, dst)
-    src =  os.path.join(study_folder, 'others', 't1_brain.nii.gz')
-    dst = os.path.join(study_folder, 't1.nii.gz')
+    src =  os.path.join(study_folder, 'preprocessed', 'others', 't1_brain.nii.gz')
+    dst = os.path.join(study_folder, 'preprocessed', 't1.nii.gz')
     os.rename(src, dst)               
     
 def apply_mask(study_folder):
     """ Skull-strip by appling mask created by hd-bet"""
-    mask = os.path.join(study_folder, 'others', 't1_mask.nii.gz')
+    mask = os.path.join(study_folder, 'preprocessed', 'others', 't1_mask.nii.gz')
     mask = ants.image_read(mask)
     for seq in scans_seg: 
-        output_path = os.path.join(study_folder, seq+'.nii.gz')
-        nii = os.path.join(study_folder, 'others', seq+'_head.nii.gz')
+        output_path = os.path.join(study_folder, 'preprocessed', seq+'.nii.gz')
+        nii = os.path.join(study_folder, 'preprocessed', 'others', seq+'_head.nii.gz')
         nii = ants.image_read(nii)
         brain = ants.mask_image(nii, mask)
         brain_no_background = ants.crop_image(brain, label_image=mask, label=1)

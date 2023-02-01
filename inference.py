@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 
 from monai.networks.nets import DynUNet
 from monai.inferers import SlidingWindowInferer
-from monai.metrics import compute_meandice
+from monai.metrics import DiceMetric
 from monai import metrics
 
 from helpers.transforms_config import get_transforms
@@ -98,7 +98,7 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     # usefull definitions
     inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
     softmax = Softmax(dim=1)
-    metric = compute_meandice(include_background=False, reduction="mean", ignore_empty=False)
+    metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False, reduction="mean")
     # do inference for all models, then ensable
     input_volume = data["image"].to(config['device'])
     ensamble = []

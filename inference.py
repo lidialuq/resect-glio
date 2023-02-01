@@ -31,14 +31,15 @@ from helpers.network import Network
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument(-batch_size, type=int, default=4)
-parser.add_argument(-num_workers, type=int, default=4)
+parser.add_argument('-batch_size', type=int, default=4)
+parser.add_argument('-num_workers', type=int, default=4)
 parser.add_argument('-device', type=str, default='cuda:0')
 
 batch_size = parser.parse_args().batch_size
 num_workers = parser.parse_args().num_workers
 device = parser.parse_args().device
 
+print('hello')
 '''
 Predict on Brainpower using an ensamble of 5 supervised or semi-supervised models.
 Make sure that the output_classses are the same as the ones used for training, for example:

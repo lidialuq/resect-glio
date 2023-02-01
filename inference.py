@@ -156,9 +156,9 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     # add back 0s to prediction to make it the same shape as original image (after resampling)
     prediction = torch.from_numpy(prediction).unsqueeze(0)
     assert prediction.dim() == data['label'].dim(), 'Prediction and label needs to have the same dimensions'
+    print(data.keys())
     prediction = invtrans_prediction(prediction, data)
     print(prediction.shape)
-
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')
     print(orig_data.shape)
@@ -224,6 +224,7 @@ print('*'*120 + '\n')
 
 # Do inference
 for data in tqdm(test_loader):
+    print(data.keys())
     print(data['subject'][0])
     prediction, _, dice, volume = infer_one_with_ensable(models, data, config)
     save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')

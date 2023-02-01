@@ -40,8 +40,7 @@ def get_transforms(label=True):
 
 def invtrans_prediction(prediction, data):
     transform = trans.Compose([
-        trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=False),   
-        trans.SpatialPadd(keys=["image", "label"], spatial_size=(128,128,128), mode='constant'),
+        trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=True),   
         ])
     print(prediction.shape)
     print(data["label"].shape)
@@ -52,5 +51,8 @@ def invtrans_prediction(prediction, data):
         inverted_pred = transform.inverse(seg_dict)
 
     return inverted_pred["label"]
+
+#trans.SpatialPadd(keys=["image", "label"], spatial_size=(128,128,128), mode='constant'),
+
 
 

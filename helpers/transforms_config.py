@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import torch
 import monai.transforms as trans
-rom monai.transforms.utils import allow_missing_keys_mode
+from monai.transforms.utils import allow_missing_keys_mode
 from .transforms import ConvertToMultiChannel
 
 

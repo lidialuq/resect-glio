@@ -98,7 +98,6 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     # usefull definitions
     inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
     softmax = Softmax(dim=1)
-    dice_metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False)
     # do inference for all models, then ensable
     input_volume = data["image"].to(config['device'])
     ensamble = []
@@ -119,9 +118,23 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     if config['label']:
         label = data["label"].to(config['device'])
         print( output.squeeze().shape, label.squeeze().shape)
+        dice_metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False)
         dice_metric(output, label)
         dice = dice_metric.aggregate().item()
-        print(dice)
+        print('mean ' + dice)
+        dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
+        dice_metric(output, label)
+        dice = dice_metric.aggregate().item()
+        print('mean_batch ' + dice)
+        dice_metric.reset()
+        dice_metric = DiceMetric(include_background=False, reduction="none", ignore_empty=False)
+        dice_metric(output, label)
+        dice = dice_metric.aggregate().item()
+        print('none ' + dice)
+        dice_metric.reset()
+        dice_metric = DiceMetric(include_background=False, reduction="none", ignore_empty=False)
+        dice = dice_metric(output, label)
+        print('none, no aggregate ' + dice[0].numpy())
         dice_metric.reset()
 
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()

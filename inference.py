@@ -118,8 +118,8 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     output = torch.argmax(ensambled_output, dim=1)
     if config['label']:
         label = data["label"].to(config['device'])
-        print(output.shape, label.shape)
-        dice = metric(output, label)
+        print( output.squeeze().shape, label.squeeze().shape)
+        dice = metric(output.squeeze(), label.squeeze())
 
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()
     prediction = output.squeeze().detach().cpu().numpy().astype('float32') 

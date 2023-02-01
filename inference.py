@@ -168,7 +168,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
 #                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k3/2022-12-03/epoch_1000/checkpoint-epoch1000.pth',
 #                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k4/2022-12-05/epoch_1000/checkpoint-epoch1000.pth']
 
-mdel_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
+model_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
              '/opt/seg-pipeline/models/semisup_97_k1.pth',
              '/opt/seg-pipeline/models/semisup_97_k2.pth',
              '/opt/seg-pipeline/models/semisup_97_k3.pth',

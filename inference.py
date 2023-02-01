@@ -176,7 +176,7 @@ model_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
 
 config = {'device': torch.device(device),
           'semisup': True, 
-          'sequences': ['T1', 'T1c', 'Flair', 'T2'],
+          'sequences': ['t1', 't1ce', 'flair', 't2'],
           'output_path': '/mnt',
           'input_path': '/mnt',
           'out_channels': 2,
@@ -188,6 +188,10 @@ if not os.path.exists(config['output_path']):
 metrics_dic = {'volume': list(),
             'dice': list(),
             'subjects': list()}
+
+print('\n' + '*'*120)
+print('Creating datasets and loading models')
+print('*'*120 + '\n')
 
 # Load dataset
 transform = get_transforms(label=False)
@@ -201,8 +205,13 @@ metrics_dic = {'volume': list(),
                 'dice': list(),
                 'subject': list()}
 
+print('\n' + '*'*120)
+print('Starting inference')
+print('*'*120 + '\n')
+
 # Do inference
 for data in tqdm(test_loader):
+    print(data['subject'][0])
     prediction, _, dice, volume = infer_one_with_ensable(models, data, config)
     save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')
     metrics_dic['volume'].append(volume)

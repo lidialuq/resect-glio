@@ -28,7 +28,6 @@ from monai import metrics
 from helpers.transforms_config import get_transforms
 from helpers.dataloader import GbmDataset
 from helpers.network import Network
-from preprocessing import move_T1_bet, move_to_others, apply_mask
 
 parser = argparse.ArgumentParser()
 
@@ -46,7 +45,7 @@ Make sure that the output_classses are the same as the ones used for training, f
 output_classes = ['edema', 'enhancing'] means edema=1 and enhancing=2 in the prediction. Background is 0.
 '''
 
-
+'''
 def load_models(model_list: list, config: dict) -> list:
     """Load models from model_list
     Args:
@@ -216,3 +215,4 @@ with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
 print(metrics_dic)
 
         
+'''

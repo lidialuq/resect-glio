@@ -135,11 +135,13 @@ def apply_mask(study_folder):
     mask = ants.image_read(mask)
     for seq in scans_seg: 
         output_path = os.path.join(study_folder, 'preprocessed', seq+'.nii.gz')
+        output_path_nocrop = os.path.join(study_folder, 'preprocessed', 'others', seq+'_nocrop.nii.gz')
         nii = os.path.join(study_folder, 'preprocessed', 'others', seq+'_head.nii.gz')
         nii = ants.image_read(nii)
         brain = ants.mask_image(nii, mask)
-        #brain_no_background = ants.crop_image(brain, label_image=mask, label=1)
-        ants.image_write(brain, output_path)
+        brain_no_background = ants.crop_image(brain, label_image=mask, label=1)
+        ants.image_write(brain_no_background, output_path)
+        ants.image_write(brain, output_path_nocrop)
 
 ############################################################################################
 

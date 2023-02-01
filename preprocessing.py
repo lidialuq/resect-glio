@@ -31,6 +31,8 @@ scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
             
 # Bias correction, resample and co-register
 def resample_coregister(study_folder):
+    if not os.path.exists(os.path.join(study_folder, 'preprocessed')):
+        os.mkdir(os.path.join(study_folder, 'preprocessed'))
     niis = []
     for seq in scans: 
         nii = os.path.join(study_folder, seq+'.nii.gz')

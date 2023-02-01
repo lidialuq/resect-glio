@@ -42,9 +42,9 @@ def invtrans_prediction(prediction, data):
     transform = trans.Compose([
         trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=True),   
         ])
-    prediction.squeeze() # remove channel dimension
-    data["label"].squeeze() # remove channel dimension
-    data["image"].squeeze() # remove channel dimension
+    prediction.squeeze().squeeze() # remove channel dimension
+    data["label"].squeeze().squeeze() # remove channel dimension
+    data["image"].squeeze().squeeze() # remove channel dimension
     print('shapes in invtrans_prediction')
     print(prediction.shape, data["label"].shape, data["image"].shape)
     transformed_data = transform(data)

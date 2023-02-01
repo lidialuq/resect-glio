@@ -138,8 +138,8 @@ def apply_mask(study_folder):
         nii = os.path.join(study_folder, 'preprocessed', 'others', seq+'_head.nii.gz')
         nii = ants.image_read(nii)
         brain = ants.mask_image(nii, mask)
-        brain_no_background = ants.crop_image(brain, label_image=mask, label=1)
-        ants.image_write(brain_no_background, output_path)
+        #brain_no_background = ants.crop_image(brain, label_image=mask, label=1)
+        ants.image_write(brain, output_path)
 
 ############################################################################################
 

@@ -56,7 +56,7 @@ def resample_coregister(study_folder):
     # resample segmentation without registration
     nii = os.path.join(study_folder, 'seg.nii.gz')
     nii = ants.image_read(nii)
-    nii = ants.resample_image(nii,(1,1,1),False,0)
+    nii = ants.resample_image(nii,(1,1,1),False,2)
     ouput_path = os.path.join(study_folder, f'seg.nii.gz')
     ants.image_write(nii, ouput_path)
     
@@ -152,7 +152,7 @@ study_folders = glob.glob(os.path.join(root, '*'))
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
 print('\n' + '*'*120)
-print('Start preprocessing. This can take a few minutes per patient depending on the original resolution of the data.')
+print('Start preprocessing. This can take up to a few minutes per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
 for idx, study_folder in enumerate(study_folders):
@@ -164,7 +164,7 @@ for idx, study_folder in enumerate(study_folders):
 # that hd-bet can read (and back)
 
 print('\n\n' + '*'*120)
-print('Start skull-stripping. This will take a few seconds per patient.')
+print('Start skull-stripping with HD-BET. This will take a few seconds per patient.')
 print('*'*120 + '\n')
 
 move_T1_bet('move', root)

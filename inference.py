@@ -148,12 +148,14 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
     # save original images (must be saved again because of removing 0s)
+    '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')
     print(orig_data.shape)
     for i, seq in enumerate(config['sequences']): 
         img = orig_data[0, i, :, :, :]
         img = nib.Nifti1Image(img, original_nii.affine)
         nib.save(img, join(subject_folder, f"{seq}.nii.gz"))
+    '''
     # save prediction
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
     nib.save(prediction_nii, join(subject_folder, save_file_name))

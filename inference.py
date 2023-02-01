@@ -95,6 +95,8 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
         prediction (list(np.array)): list of prediction, ensabled_probabilities. 
             shape is (x,y,z) for both
     """
+    print(data['foreground_start_coord'])
+    print(data['foreground_end_coord'])
     # usefull definitions
     inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)

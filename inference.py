@@ -121,12 +121,12 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
         print(output.shape, label.shape)
         dice = metric(output, label)
 
-    volume = np.count_nonzero(prediction == 1)/1000
-
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()
     prediction = output.squeeze().detach().cpu().numpy().astype('float32') 
+    volume = np.count_nonzero(prediction == 1)/1000
     ensambled_output = ensambled_output.squeeze()[1].detach().cpu().numpy().astype('float32') #[1] to exclude background
 
+    print(dice, volume, prediction.shape, ensambled_output.shape)
     return prediction, ensambled_output, dice, volume # shapes are (x,y,z)
 
 
@@ -204,6 +204,8 @@ models = load_models(model_path, config)
 metrics_dic = {'volume': list(),
                 'dice': list(),
                 'subject': list()}
+
+print('Done')
 
 print('\n' + '*'*120)
 print('Starting inference')

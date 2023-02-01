@@ -25,7 +25,7 @@ from monai.inferers import SlidingWindowInferer
 from monai.metrics import DiceMetric
 from monai import metrics
 
-from helpers.transforms_config import get_transforms
+from helpers.transforms_config import get_transforms, invtrans_prediction
 from helpers.dataloader import GbmDataset
 from helpers.network import Network
 
@@ -153,7 +153,12 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     subject_folder = join(config['output_path'], data['subject'][0])
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
-    # save original images (must be saved again because of removing 0s)
+    # add back 0s to prediction to make it the same shape as original image (after resampling)
+    prediction = torch.from_numpy(prediction).unsqueeze(0)
+    assert prediction.dim() == data['label'].dim(), 'Prediction and label needs to have the same dimensions'
+    prediction = invtrans_prediction(prediction, data)
+    print(prediction.shape)
+    
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')
     print(orig_data.shape)
@@ -165,8 +170,6 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     # save prediction
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
     nib.save(prediction_nii, join(subject_folder, save_file_name))
-
-
 
 
 # Path to models and config

@@ -47,13 +47,13 @@ class GbmDataset(Dataset):
         # load sequences into one tensor of shape (C,H,W,D)
         image = []        
         for seq in self.input: 
-            nii = nib.load(os.path.join(self.root, self.subjects[idx], f'{seq}.nii.gz'))
+            nii = nib.load(os.path.join(self.root, self.subjects[idx], 'preprocessed', f'{seq}.nii.gz'))
             image.append(nii.get_fdata())
         image = np.stack(image, axis=0)
         image = torch.from_numpy(image)
         
         # load label into one tensor of shape (H,W,D)
-        label = nii = nib.load(os.path.join(self.root, self.subjects[idx], f'seg.nii.gz'))  
+        label = nii = nib.load(os.path.join(self.root, self.subjects[idx], 'preprocessed', f'seg.nii.gz'))  
         label = torch.from_numpy(nii.get_fdata())
         
         # make dictionary and transform

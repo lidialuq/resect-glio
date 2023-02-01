@@ -3,6 +3,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import torch
 import monai.transforms as trans
+rom monai.transforms.utils import allow_missing_keys_mode
 from .transforms import ConvertToMultiChannel
 
 
@@ -35,5 +36,20 @@ def get_transforms(label=True):
     
     return transform
 
+
+
+def invtrans_prediction(prediction, data):
+    transform = [
+        trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=False),   
+        trans.SpatialPadd(keys=["image", "label"], spatial_size=(128,128,128), mode='constant'),
+        ]
+
+    transformed_data = transform(data)
+    prediction.applied_operations = transformed_data["label"].applied_operations
+    seg_dict = {"label": prediction}
+    with allow_missing_keys_mode(transform):
+        inverted_pred = transform.inverse(seg_dict)
+
+    return inverted_pred["label"]
 
 

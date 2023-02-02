@@ -194,10 +194,8 @@ def calculate_metrics(data, resampled, metrics):
     prediction_original = nib.load(prediction)
     seg_original = nib.load(seg)
     # make batch and channel dimension to compute metrics
-    prediction_original = prediction_original.get_fdata()
-    seg_original = seg_original.get_fdata()
-    predicition_tensor = torch.from_numpy(prediction_original).unsqueeze(0).unsqueeze(0)
-    seg_tensor = torch.from_numpy(seg_original).unsqueeze(0).unsqueeze(0)
+    predicition_tensor = torch.from_numpy(prediction_original.get_fdata()).unsqueeze(0).unsqueeze(0)
+    seg_tensor = torch.from_numpy(seg_original.get_fdata()).unsqueeze(0).unsqueeze(0)
     assert predicition_tensor.dim() == 5, 'Prediction needs to be BxCxDxHxW'
     assert seg_tensor.dim() == 5, 'Label needs to be BxCxDxHxW'
     # dice

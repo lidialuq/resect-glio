@@ -180,9 +180,11 @@ def prediction_to_original_space(data):
     seg_nocrop = ants.image_read(seg_nocrop)
     prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
     prediction = ants.image_read(prediction)
-    prediction_cropped = ants.decrop_image(prediction, seg_nocrop)
+    seg = join(data['path'][0], 'preprocessed', 'seg.nii.gz')
+    seg = ants.image_read(seg)
+    prediction_nocrop = ants.decrop_image(seg, seg_nocrop)
     # write prediction_cropped to file
-    ants.image_write(prediction_cropped, join(data['path'][0], 'preprocessed', 'others', 'prediction_cropped.nii.gz'))
+    ants.image_write(prediction_nocrop, join(data['path'][0], 'preprocessed', 'others', 'prediction_cropped.nii.gz'))
 
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',

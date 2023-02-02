@@ -185,7 +185,7 @@ def calculate_metrics(data, resampled, metrics):
     """
 
     if resampled:  
-        prediction = join(data['path'][0], 'preprocessed', prediction.nii.gz')
+        prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
         seg= join(data['path'][0], 'preprocessed','seg.nii.gz')
     else:
         prediction = join(data['path'][0], 'prediction.nii.gz')
@@ -300,8 +300,8 @@ for data in tqdm(test_loader):
     # save prediction in original space
     prediction_to_original_space(data)
     # get metrics
-    metrics_dic = calculate_metrics((data, resampled=False, metrics=metrics_dic))
-    metrics_dic = calculate_metrics((data, resampled=True, metrics=metrics_dic))
+    metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
+    metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
 
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:

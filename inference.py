@@ -26,7 +26,7 @@ from monai.inferers import SlidingWindowInferer
 from monai.metrics import DiceMetric
 from monai import metrics
 
-from helpers.transforms_config import get_transforms, invtrans_prediction
+from helpers.transforms_config import get_transforms
 from helpers.dataloader import GbmDataset
 from helpers.network import Network
 
@@ -96,8 +96,6 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
         prediction (list(np.array)): list of prediction, ensabled_probabilities. 
             shape is (x,y,z) for both
     """
-    print(data['foreground_start_coord'])
-    print(data['foreground_end_coord'])
     # usefull definitions
     inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
@@ -185,7 +183,7 @@ def prediction_to_original_space(data):
     prediction = ants.image_read(prediction)
     # decrop prediction, then resample to original space
     prediction_nocrop = ants.decrop_image(prediction, seg_nocrop)
-    prediction_original = ants.resample_image(prediction_nocrop, seg_original, use_voxels=False, interp_type=1) # 0 = linear    
+    prediction_original = ants.resample_image_to_target(prediction_nocrop, seg_original, imagetype=0, interp_type='nearestNeighbor') 
     # write prediction_cropped to file
     ants.image_write(prediction_original, join(data['path'][0], 'prediction.nii.gz'))
 

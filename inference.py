@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 
 from monai.networks.nets import DynUNet
 from monai.inferers import SlidingWindowInferer
-from monai.metrics import DiceMetric
+from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai import metrics
 
 from helpers.transforms_config import get_transforms
@@ -133,7 +133,7 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     volume = np.count_nonzero(prediction == 1)/1000
     ensambled_output = ensambled_output.squeeze()[1].detach().cpu().numpy().astype('float32') #[1] to exclude background
 
-    print(dice, volume, prediction.shape, ensambled_output.shape)
+    print(f'volume: {volume}mL')
     return prediction, ensambled_output, dice, volume # shapes are (x,y,z)
 
 
@@ -165,7 +165,6 @@ def save_prediction(prediction, ensambled_output, data, config, save_file_name='
     '''
     # save prediction
     prediction = torch.from_numpy(prediction)
-    print(prediction.shape)
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
     nib.save(prediction_nii, join(subject_folder, save_file_name))
 
@@ -178,7 +177,6 @@ def prediction_to_original_space(data):
     seg_nocrop = ants.image_read(seg_nocrop)
     seg_original = join(data['path'][0], 'seg.nii.gz')
     seg_original = ants.image_read(seg_original)
-    print(seg_original.shape)
     prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
     prediction = ants.image_read(prediction)
     # decrop prediction, then resample to original space
@@ -186,6 +184,31 @@ def prediction_to_original_space(data):
     prediction_original = ants.resample_image_to_target(prediction_nocrop, seg_original, imagetype=0, interp_type='nearestNeighbor') 
     # write prediction_cropped to file
     ants.image_write(prediction_original, join(data['path'][0], 'prediction.nii.gz'))
+
+    return prediction_original, seg_original
+
+def calculate_metrics(prediction_original, seg_original):
+    """Calculate metrics for one subject
+    """
+    predicition_original = prediction_original.unsqueeze(0).unsqueeze(0)
+    seg_original = seg_original.unsqueeze(0).unsqueeze(0)
+    assert predicition_original.dim() == 5, 'Prediction needs to be BxCxDxHxW'
+    assert seg_original.dim() == 5, 'Label needs to be BxCxDxHxW'
+
+    # dice
+    dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
+    dice = dice_metric(predicition_original, seg_original)
+    dice = dice_metric.aggregate().item()
+    dice_metric.reset()
+    # hausdorff
+    hd95 = HausdorffDistanceMetric(metric='euclidean', include_background=False, reduce="mean_batch", percentile=95)
+    hd95 = hd95(predicition_original, seg_original)
+    hd95 = hd95.aggregate().item()
+    hd95.reset()
+    # print
+    print(f'Dice: {dice}')
+    print(f'Hausdorff 95: {hd95}')
+    return dice, hd95
 
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
@@ -246,7 +269,8 @@ for data in tqdm(test_loader):
     metrics_dic['volume'].append(volume)
     metrics_dic['dice'].append(dice)
     metrics_dic['subject'].append(data['subject'][0])
-    prediction_to_original_space(data)
+    prediction_original, seg_original = prediction_to_original_space(data)
+    dice, hd95 = calculate_metrics(prediction_original, seg_original)
 
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:

@@ -206,7 +206,7 @@ def calculate_metrics(data, resampled, metrics):
     dice = dice_metric.aggregate().item()
     dice_metric.reset()
     # hausdorff
-    hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduce="mean_batch", percentile=95)
+    hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
     hd95_metric(predicition_tensor, seg_tensor)
     hd95 = hd95_metric.aggregate().item()
     hd95.reset()

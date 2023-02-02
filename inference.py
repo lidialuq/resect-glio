@@ -150,7 +150,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
         save_file_name (str): name to save the prediction, include .nii.gz
     """
     # open header from original image
-    original_nii_path = join(data['path'][0], f"t1.nii.gz")
+    original_nii_path = join(data['path'][0], "preprocessed", f"seg.nii.gz")
     original_nii = nib.load(original_nii_path)
     # make folder in predictions_folder with subject name
     subject_folder = join(config['output_path'], data['subject'][0], 'preprocessed')
@@ -180,11 +180,11 @@ def prediction_to_original_space(data):
     seg_nocrop = ants.image_read(seg_nocrop)
     prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
     prediction = ants.image_read(prediction)
-    seg = join(data['path'][0], 'preprocessed', 'seg.nii.gz')
-    seg = ants.image_read(seg)
-    prediction_nocrop = ants.decrop_image(seg, seg_nocrop)
+    #seg = join(data['path'][0], 'preprocessed', 'seg.nii.gz')
+    #seg = ants.image_read(seg)
+    prediction_nocrop = ants.decrop_image(prediction, seg_nocrop)
     # write prediction_cropped to file
-    ants.image_write(prediction_nocrop, join(data['path'][0], 'preprocessed', 'others', 'prediction_cropped.nii.gz'))
+    ants.image_write(prediction_nocrop, join(data['path'][0], 'preprocessed', 'others', 'prediction_nocrop.nii.gz'))
 
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',

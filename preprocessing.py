@@ -144,6 +144,15 @@ def apply_mask(study_folder):
         if seq == 'seg':
             ants.image_write(brain, output_path_nocrop)
 
+def cleanup(study_folder):
+    '''Remove files that are no longer needed, aka everything in folder others 
+    but the seg_nocrop file (this will be used by inference.py to resample
+    the segmentation to the original resolution)'''
+    others_folder = os.path.join(study_folder, 'preprocessed', 'others')
+    files = glob.glob(os.path.join(others_folder, '*'))
+    for file in files:
+        if not file.endswith('seg_nocrop.nii.gz'):
+            os.remove(file)
 ############################################################################################
 
 study_folders = glob.glob(os.path.join(root, '*'))
@@ -183,4 +192,5 @@ for idx, study_folder in enumerate(study_folders):
         print(f'{idx+1}/{len(study_folders)}: ' + study_folder)
         move_to_others(study_folder)
         apply_mask(study_folder)
+        cleanup(study_folder)
 

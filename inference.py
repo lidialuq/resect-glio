@@ -179,6 +179,7 @@ def prediction_to_original_space(data):
     seg_nocrop = join(data['path'][0], 'preprocessed', 'others', 'seg_nocrop.nii.gz')
     seg_nocrop = ants.image_read(seg_nocrop)
     prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
+    prediction = ants.image_read(prediction)
     prediction_cropped = ants.decrop_image(prediction, seg_nocrop)
     # write prediction_cropped to file
     ants.image_write(prediction_cropped, join(data['path'][0], 'preprocessed', 'others', 'prediction_cropped.nii.gz'))
@@ -243,7 +244,7 @@ for data in tqdm(test_loader):
     metrics_dic['dice'].append(dice)
     metrics_dic['subject'].append(data['subject'][0])
     prediction_to_original_space(data)
-    
+
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
     pickle.dump(metrics_dic, f)

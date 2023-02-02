@@ -216,6 +216,12 @@ def calculate_metrics(data, resampled, metrics):
     dice = dice_metric.aggregate()
     print(f'dice mean: {dice}')
     dice_metric.reset()
+    #########doublecheck dice
+    p = prediction_original.get_fdata()
+    s = seg_original.get_fdata()
+    dice = 2 * np.sum(p * s) / (np.sum(p) + np.sum(s))
+    print(f'Dice try1 = {dice}')
+    
     # hausdorff
     hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
     hd95_metric(prediction, seg)

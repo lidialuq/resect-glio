@@ -98,7 +98,6 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     """
     # usefull definitions
     inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
-    dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
     softmax = Softmax(dim=1)
     # do inference for all models, then ensable
     input_volume = data["image"].to(config['device'])
@@ -117,19 +116,11 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     # ensamble
     ensambled_output = torch.mean(torch.stack(ensamble), dim=0)
     output = torch.argmax(ensambled_output, dim=1)
-    # if config['label']:
-    #     label = data["label"].to(config['device']).unsqueeze(0)
-    #     output = output.unsqueeze(0)
-    #     # assert that dim label is 5 else write dim
-    #     assert label.dim() == 5, 'Label needs to be BxCxDxHxW. Something might be wrong with the preprocessing.'
 
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()
     prediction = output.squeeze().detach().cpu().numpy().astype('float32') 
-    volume = np.count_nonzero(prediction == 1)/1000
     ensambled_output = ensambled_output.squeeze()[1].detach().cpu().numpy().astype('float32') #[1] to exclude background
 
-    print(f'volume: {volume}mL')
-    print(prediction.shape)
     return prediction, ensambled_output
 
 
@@ -200,28 +191,9 @@ def calculate_metrics(data, resampled, metrics):
     assert seg.dim() == 5, 'Label needs to be BxCxDxHxW'
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
-    print(prediction.shape)
-    # print all unique values in prediction
-    print(np.unique(prediction))
-    print(seg.shape)
-    # print all unique values in seg
-    print(np.unique(seg))
     dice_metric(prediction, seg)
     dice = dice_metric.aggregate().item()
-    print(f'dice mean batch: {dice}')
     dice_metric.reset()
-    # dice
-    dice_metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False)
-    dice_metric(prediction, seg)
-    dice = dice_metric.aggregate()
-    print(f'dice mean: {dice}')
-    dice_metric.reset()
-    #########doublecheck dice
-    p = prediction_original.get_fdata()
-    s = seg_original.get_fdata()
-    dice = 2 * np.sum(p * s) / (np.sum(p) + np.sum(s))
-    print(f'Dice try1 = {dice}')
-    
     # hausdorff
     hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
     hd95_metric(prediction, seg)
@@ -234,13 +206,6 @@ def calculate_metrics(data, resampled, metrics):
     voxel_count_label = np.count_nonzero(seg)
     volume_prediction = (voxel_count_prediction * voxel_volume)/1000
     volume_label = (voxel_count_label * voxel_volume)/1000
-    
-    # print
-    print(f'Resampled: {resampled}')
-    print(f'Dice: {dice}')
-    print(f'Hausdorff 95: {hd95}')
-    print(f'Volume prediction: {volume_prediction}')
-    print(f'Volume label: {volume_label}')
     # save in metrics dictionary
     if resampled:
         metrics['dice_resampled'].append(dice)

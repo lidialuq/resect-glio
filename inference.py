@@ -170,10 +170,6 @@ def save_prediction(prediction, ensambled_output, data, config, save_file_name='
     print(prediction.shape)
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
     nib.save(prediction_nii, join(subject_folder, save_file_name))
-    # save probabilistic prediction
-    ensambled_output = torch.from_numpy(ensambled_output)
-    ensambled_output_nii = nib.Nifti1Image(ensambled_output, original_nii.affine, original_nii.header)
-    nib.save(ensambled_output_nii, join(subject_folder, 'ensambled_output.nii.gz'))
 
 
 def prediction_to_original_space(data):
@@ -185,7 +181,7 @@ def prediction_to_original_space(data):
     seg_original = join(data['path'][0], 'seg.nii.gz')
     seg_original = ants.image_read(seg_original)
     print(seg_original.shape)
-    prediction = join(data['path'][0], 'preprocessed', 'ensambled_output.nii.gz')
+    prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
     prediction = ants.image_read(prediction)
     # decrop prediction, then resample to original space
     prediction_nocrop = ants.decrop_image(prediction, seg_nocrop)

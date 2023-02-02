@@ -22,9 +22,7 @@ def get_transforms(label=True):
         keys = ["image"]
 
     transform = [
-        trans.CropForegroundd(keys=keys, source_key="image", margin=3, return_coords=False),   
         trans.NormalizeIntensityd(keys=["image"], nonzero=True, channel_wise=True), 
-        trans.SpatialPadd(keys=keys, spatial_size=(128,128,128), mode='constant'),
         trans.EnsureTyped(keys=["image"], data_type='tensor', dtype=torch.float16),
         ]
 
@@ -37,24 +35,6 @@ def get_transforms(label=True):
     return transform
 
 
-
-def invtrans_prediction(prediction, data):
-    transform = trans.Compose([
-        trans.CropForegroundd(keys=["image", "label"], source_key="image", margin=3, return_coords=True),   
-        ])
-    # prediction = prediction.squeeze() # remove channel dimension
-    # data["label"] = data["label"].squeeze() # remove channel dimension
-    # data["image"] = data["image"].squeeze() # remove channel dimension
-    print('shapes in invtrans_prediction')
-    print(prediction.shape, data["label"].shape, data["image"].shape)
-    prediction.applied_operations = data["label"].applied_operations
-    seg_dict = {"label": prediction}
-    with allow_missing_keys_mode(transform):
-        inverted_pred = transform.inverse(seg_dict)
-
-    return inverted_pred["label"]
-
-#trans.SpatialPadd(keys=["image", "label"], spatial_size=(128,128,128), mode='constant'),
 
 
 

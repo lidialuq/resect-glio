@@ -200,6 +200,12 @@ def calculate_metrics(data, resampled, metrics):
     assert seg.dim() == 5, 'Label needs to be BxCxDxHxW'
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
+    print(prediction.shape)
+    # print all unique values in prediction
+    print(np.unique(prediction))
+    print(seg.shape)
+    # print all unique values in seg
+    print(np.unique(seg))
     dice_metric(prediction, seg)
     dice = dice_metric.aggregate().item()
     print(f'dice mean batch: {dice}')
@@ -207,13 +213,13 @@ def calculate_metrics(data, resampled, metrics):
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False)
     dice_metric(prediction, seg)
-    dice = dice_metric.aggregate().item()
+    dice = dice_metric.aggregate()
     print(f'dice mean: {dice}')
     dice_metric.reset()
     # hausdorff
     hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
     hd95_metric(prediction, seg)
-    hd95 = hd95_metric.aggregate().item()
+    hd95 = hd95_metric.aggregate()
     hd95_metric.reset()
     # calculate volume by counting number of voxels with value 1, then multiply by voxel size
     voxel_dims = (prediction_original.header["pixdim"])[1:4]
@@ -291,7 +297,6 @@ metrics_dic = {'volume_label': list(),
                 'subject': list()}
 
 print('Done')
-
 print('\n' + '*'*120)
 print('Starting inference')
 print('*'*120 + '\n')

@@ -194,25 +194,25 @@ def calculate_metrics(data, resampled, metrics):
     prediction_original = nib.load(prediction)
     seg_original = nib.load(seg)
     # make batch and channel dimension to compute metrics
-    predicition = torch.from_numpy(prediction_original.get_fdata()).unsqueeze(0).unsqueeze(0)
+    prediction = torch.from_numpy(prediction_original.get_fdata()).unsqueeze(0).unsqueeze(0)
     seg = torch.from_numpy(seg_original.get_fdata()).unsqueeze(0).unsqueeze(0)
-    assert predicition.dim() == 5, 'Prediction needs to be BxCxDxHxW'
+    assert prediction.dim() == 5, 'Prediction needs to be BxCxDxHxW'
     assert seg.dim() == 5, 'Label needs to be BxCxDxHxW'
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
-    dice_metric(predicition, seg)
+    dice_metric(prediction, seg)
     dice = dice_metric.aggregate().item()
     print(f'dice mean batch: {dice}')
     dice_metric.reset()
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean", ignore_empty=False)
-    dice_metric(predicition, seg)
+    dice_metric(prediction, seg)
     dice = dice_metric.aggregate().item()
     print(f'dice mean: {dice}')
     dice_metric.reset()
     # hausdorff
     hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
-    hd95_metric(predicition, seg)
+    hd95_metric(prediction, seg)
     hd95 = hd95_metric.aggregate().item()
     hd95_metric.reset()
     # calculate volume by counting number of voxels with value 1, then multiply by voxel size
@@ -220,8 +220,8 @@ def calculate_metrics(data, resampled, metrics):
     voxel_volume = np.prod(voxel_dims)
     voxel_count_prediction = np.count_nonzero(prediction)
     voxel_count_label = np.count_nonzero(seg)
-    volume_prediction = voxel_count_prediction * voxel_volume
-    volume_label = voxel_count_label * voxel_volume
+    volume_prediction = (voxel_count_prediction * voxel_volume)/1000
+    volume_label = (voxel_count_label * voxel_volume)/1000
     
     # print
     print(f'Resampled: {resampled}')
@@ -307,6 +307,7 @@ for data in tqdm(test_loader):
     # get metrics
     metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
     metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
+    metrics_dic.append(data['subject'][0])
 
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:

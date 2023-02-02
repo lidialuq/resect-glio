@@ -152,11 +152,11 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     original_nii_path = join(data['path'][0], f"t1.nii.gz")
     original_nii = nib.load(original_nii_path)
     # make folder in predictions_folder with subject name
-    subject_folder = join(config['output_path'], data['subject'][0])
+    subject_folder = join(config['output_path'], data['subject'][0], 'preprocessed')
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
     # add back 0s to prediction to make it the same shape as original image (after resampling)
-    prediction = torch.from_numpy(prediction).unsqueeze(0)
+    prediction = torch.from_numpy(prediction)
     print(prediction.shape)
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')

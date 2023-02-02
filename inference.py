@@ -209,7 +209,7 @@ def calculate_metrics(data, resampled, metrics):
     hd95_metric = HausdorffDistanceMetric(distance_metric='euclidean', include_background=False, reduction="mean_batch", percentile=95)
     hd95_metric(predicition_tensor, seg_tensor)
     hd95 = hd95_metric.aggregate().item()
-    hd95.reset()
+    hd95_metric.reset()
     # calculate volume by counting number of voxels with value 1, then multiply by voxel size
     voxel_dims = (prediction_original.header["pixdim"])[1:4]
     voxel_volume = np.prod(voxel_dims)

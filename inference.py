@@ -15,6 +15,7 @@ import nibabel as nib
 import typing
 import glob
 import argparse
+import ants
 
 import torch
 from torch.nn import Softmax
@@ -171,6 +172,17 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     nib.save(prediction_nii, join(subject_folder, save_file_name))
 
 
+def prediction_to_original_space(data):
+    """First add back zeros to the prediction, then resample to original space. 
+    This must be done to calculate metrics
+    """
+    seg_nocrop = join(data['path'][0], 'preprocessed', 'others', 'seg_nocrop.nii.gz')
+    seg_nocrop = ants.image_read(seg_nocrop)
+    prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
+    prediction_cropped = ants.decrop_image(prediction, seg_nocrop)
+    # write prediction_cropped to file
+    ants.image_write(prediction_cropped, join(data['path'][0], 'preprocessed', 'others', 'prediction_cropped.nii.gz'))
+
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
 #                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k1/2022-12-01/epoch_1000/checkpoint-epoch1000.pth',
@@ -230,7 +242,8 @@ for data in tqdm(test_loader):
     metrics_dic['volume'].append(volume)
     metrics_dic['dice'].append(dice)
     metrics_dic['subject'].append(data['subject'][0])
-
+    prediction_to_original_space(data)
+    
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
     pickle.dump(metrics_dic, f)

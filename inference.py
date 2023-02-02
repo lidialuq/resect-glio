@@ -184,11 +184,12 @@ def prediction_to_original_space(data):
     seg_nocrop = ants.image_read(seg_nocrop)
     seg_original = join(data['path'][0], 'seg.nii.gz')
     seg_original = ants.image_read(seg_original)
+    print(seg_original.shape)
     prediction = join(data['path'][0], 'preprocessed', 'ensambled_output.nii.gz')
     prediction = ants.image_read(prediction)
     # decrop prediction, then resample to original space
     prediction_nocrop = ants.decrop_image(prediction, seg_nocrop)
-    prediction_original = ants.resample_image(prediction_nocrop, seg_original, use_voxels=True, interp_type=1) # 0 = linear    
+    prediction_original = ants.resample_image(prediction_nocrop, seg_original, use_voxels=False, interp_type=1) # 0 = linear    
     # write prediction_cropped to file
     ants.image_write(prediction_original, join(data['path'][0], 'prediction.nii.gz'))
 

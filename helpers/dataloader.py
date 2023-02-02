@@ -64,8 +64,7 @@ class GbmDataset(Dataset):
             sample = {'image': image, 'subject': self.subjects[idx],
                     'path': os.path.join(self.root, self.subjects[idx])}
         if self.transform:
-            print(sample['label'].shape)
-            print(sample['image'].shape)
+
             sample = self.transform(sample)
 
         return sample

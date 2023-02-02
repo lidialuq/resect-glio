@@ -117,16 +117,11 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     # ensamble
     ensambled_output = torch.mean(torch.stack(ensamble), dim=0)
     output = torch.argmax(ensambled_output, dim=1)
-    if config['label']:
-        label = data["label"].to(config['device']).unsqueeze(0)
-        output = output.unsqueeze(0)
-        # assert that dim label is 5 else write dim
-        assert label.dim() == 5, 'Label needs to be BxCxDxHxW. Something might be wrong with the preprocessing.'
-        dice_metric(output, label)
-        dice = dice_metric.aggregate().item()
-        dice_metric.reset()
-        print('mean_batch:')
-        print(dice)
+    # if config['label']:
+    #     label = data["label"].to(config['device']).unsqueeze(0)
+    #     output = output.unsqueeze(0)
+    #     # assert that dim label is 5 else write dim
+    #     assert label.dim() == 5, 'Label needs to be BxCxDxHxW. Something might be wrong with the preprocessing.'
 
     #output_onehot = one_hot(output.long(), num_classes=config['out_channels']).permute(0, 4, 1, 2, 3).type(torch.float32).cpu()
     prediction = output.squeeze().detach().cpu().numpy().astype('float32') 
@@ -134,13 +129,13 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
     ensambled_output = ensambled_output.squeeze()[1].detach().cpu().numpy().astype('float32') #[1] to exclude background
 
     print(f'volume: {volume}mL')
-    return prediction, ensambled_output, dice, volume # shapes are (x,y,z)
+    print(prediction.shape)
+    return prediction, ensambled_output
 
 
 
-def save_prediction(prediction, ensambled_output, data, config, save_file_name='prediction.nii.gz'):
-    """Save prediction to nifti file, save also original images so that they have 
-    the same shape as the prediction
+def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'):
+    """Save prediction to nifti file
     Args:
         prediction (numpy array): prediction from infer_one_with_ensable()
         data (dict): dict (one batch from dataloader)
@@ -154,15 +149,6 @@ def save_prediction(prediction, ensambled_output, data, config, save_file_name='
     subject_folder = join(config['output_path'], data['subject'][0], 'preprocessed')
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
-
-    '''
-    orig_data = data['image'].cpu().detach().numpy().astype('float32')
-    print(orig_data.shape)
-    for i, seq in enumerate(config['sequences']): 
-        img = orig_data[0, i, :, :, :]
-        img = nib.Nifti1Image(img, original_nii.affine)
-        nib.save(img, join(subject_folder, f"{seq}.nii.gz"))
-    '''
     # save prediction
     prediction = torch.from_numpy(prediction)
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
@@ -185,30 +171,72 @@ def prediction_to_original_space(data):
     # write prediction_cropped to file
     ants.image_write(prediction_original, join(data['path'][0], 'prediction.nii.gz'))
 
-    return prediction_original, seg_original
 
-def calculate_metrics(prediction_original, seg_original):
+def calculate_metrics(data, resampled, metrics):
     """Calculate metrics for one subject
+    Dice, 95% hausdorff distance, and volume of prediction and label. 
+    Calculate both for the label/prediciton in original space and in the resampled space
+    Args:
+        data (dict): dict (must have batch size 1)
+        resampled (bool): if True, calculate metrics for resampled prediction, else calculate metrics for prediction in original space
+        metrics (dict): dict with metrics to update
+    Returns:
+        metrics (dict): dict with updated metrics
     """
-    predicition_original = prediction_original.unsqueeze(0).unsqueeze(0)
-    seg_original = seg_original.unsqueeze(0).unsqueeze(0)
-    assert predicition_original.dim() == 5, 'Prediction needs to be BxCxDxHxW'
-    assert seg_original.dim() == 5, 'Label needs to be BxCxDxHxW'
 
+    if resampled:  
+        prediction = join(data['path'][0], 'preprocessed', prediction.nii.gz')
+        seg= join(data['path'][0], 'preprocessed','seg.nii.gz')
+    else:
+        prediction = join(data['path'][0], 'prediction.nii.gz')
+        seg = join(data['path'][0], 'seg.nii.gz')
+
+    prediction_original = nib.load(prediction)
+    seg_original = nib.load(seg)
+    # make batch and channel dimension to compute metrics
+    prediction_original = prediction_original.get_fdata()
+    seg_original = seg_original.get_fdata()
+    predicition_tensor = torch.from_numpy(prediction_original).unsqueeze(0).unsqueeze(0)
+    seg_tensor = torch.from_numpy(seg_original).unsqueeze(0).unsqueeze(0)
+    assert predicition_tensor.dim() == 5, 'Prediction needs to be BxCxDxHxW'
+    assert seg_tensor.dim() == 5, 'Label needs to be BxCxDxHxW'
     # dice
     dice_metric = DiceMetric(include_background=False, reduction="mean_batch", ignore_empty=False)
-    dice = dice_metric(predicition_original, seg_original)
+    dice_metric(predicition_tensor, seg_tensor)
     dice = dice_metric.aggregate().item()
     dice_metric.reset()
     # hausdorff
-    hd95 = HausdorffDistanceMetric(metric='euclidean', include_background=False, reduce="mean_batch", percentile=95)
-    hd95 = hd95(predicition_original, seg_original)
-    hd95 = hd95.aggregate().item()
+    hd95_metric = HausdorffDistanceMetric(metric='euclidean', include_background=False, reduce="mean_batch", percentile=95)
+    hd95_metric(predicition_tensor, seg_tensor)
+    hd95 = hd95_metric.aggregate().item()
     hd95.reset()
+    # calculate volume by counting number of voxels with value 1, then multiply by voxel size
+    voxel_dims = (prediction_original.header["pixdim"])[1:4]
+    voxel_volume = np.prod(voxel_dims)
+    voxel_count_prediction = np.count_nonzero(prediction_original)
+    voxel_count_label = np.count_nonzero(seg_original)
+    volume_prediction = voxel_count_prediction * voxel_volume
+    volume_label = voxel_count_label * voxel_volume
+    
     # print
+    print(f'Resampled: {resampled}')
     print(f'Dice: {dice}')
     print(f'Hausdorff 95: {hd95}')
-    return dice, hd95
+    print(f'Volume prediction: {volume_prediction}')
+    print(f'Volume label: {volume_label}')
+    # save in metrics dictionary
+    if resampled:
+        metrics['dice_resampled'].append(dice)
+        metrics['hd95_resampled'].append(hd95)
+        metrics['volume_prediction_resampled'].append(volume_prediction)
+        metrics['volume_label_resampled'].append(volume_label)
+    else:
+        metrics['dice'].append(dice)
+        metrics['hd95'].append(hd95)
+        metrics['volume_prediction'].append(volume_prediction)
+        metrics['volume_label'].append(volume_label)
+    
+    return metrics
 
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
@@ -234,9 +262,6 @@ config = {'device': torch.device(device),
 if not os.path.exists(config['output_path']):
     os.mkdir(config['output_path'])
 
-metrics_dic = {'volume': list(),
-            'dice': list(),
-            'subjects': list()}
 
 print('\n' + '*'*120)
 print('Creating datasets and loading models')
@@ -250,8 +275,14 @@ test_loader = DataLoader(test_ds, batch_size=1, num_workers=num_workers)
 # Load models
 models = load_models(model_path, config)
 
-metrics_dic = {'volume': list(),
+metrics_dic = {'volume_label': list(),
+                'volume_prediction': list(),
                 'dice': list(),
+                'hd95': list(),
+                'volume_label_resampled': list(),
+                'volume_prediction_resampled': list(),
+                'dice_resampled': list(),
+                'hd95_resampled': list(),
                 'subject': list()}
 
 print('Done')
@@ -262,15 +293,15 @@ print('*'*120 + '\n')
 
 # Do inference
 for data in tqdm(test_loader):
-    print(data.keys())
     print(data['subject'][0])
-    prediction, ensambled_output, dice, volume = infer_one_with_ensable(models, data, config)
-    save_prediction(prediction, ensambled_output, data, config, save_file_name='prediction.nii.gz')
-    metrics_dic['volume'].append(volume)
-    metrics_dic['dice'].append(dice)
-    metrics_dic['subject'].append(data['subject'][0])
-    prediction_original, seg_original = prediction_to_original_space(data)
-    dice, hd95 = calculate_metrics(prediction_original, seg_original)
+    prediction, _ = infer_one_with_ensable(models, data, config)
+    # save prediction in resamples space
+    save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')
+    # save prediction in original space
+    prediction_to_original_space(data)
+    # get metrics
+    metrics_dic = calculate_metrics((data, resampled=False, metrics=metrics_dic))
+    metrics_dic = calculate_metrics((data, resampled=True, metrics=metrics_dic))
 
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:

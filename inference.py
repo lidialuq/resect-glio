@@ -307,7 +307,7 @@ for data in tqdm(test_loader):
     # get metrics
     metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
     metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
-    metrics_dic.append(data['subject'][0])
+    metrics_dic['subject'].append(data['subject'][0])
 
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:

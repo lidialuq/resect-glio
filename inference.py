@@ -140,7 +140,7 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
 
 
 
-def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'):
+def save_prediction(prediction, ensambled_output, data, config, save_file_name='prediction.nii.gz'):
     """Save prediction to nifti file, save also original images so that they have 
     the same shape as the prediction
     Args:
@@ -156,9 +156,7 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
     subject_folder = join(config['output_path'], data['subject'][0], 'preprocessed')
     if not os.path.exists(subject_folder):
         os.mkdir(subject_folder)
-    # add back 0s to prediction to make it the same shape as original image (after resampling)
-    prediction = torch.from_numpy(prediction)
-    print(prediction.shape)
+
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')
     print(orig_data.shape)
@@ -168,8 +166,14 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
         nib.save(img, join(subject_folder, f"{seq}.nii.gz"))
     '''
     # save prediction
+    prediction = torch.from_numpy(prediction)
+    print(prediction.shape)
     prediction_nii = nib.Nifti1Image(prediction, original_nii.affine, original_nii.header)
     nib.save(prediction_nii, join(subject_folder, save_file_name))
+    # save probabilistic prediction
+    ensambled_output = torch.from_numpy(ensambled_output)
+    ensambled_output_nii = nib.Nifti1Image(ensambled_output, original_nii.affine, original_nii.header)
+    nib.save(ensambled_output_nii, join(subject_folder, 'ensambled_output.nii.gz'))
 
 
 def prediction_to_original_space(data):
@@ -178,13 +182,15 @@ def prediction_to_original_space(data):
     """
     seg_nocrop = join(data['path'][0], 'preprocessed', 'others', 'seg_nocrop.nii.gz')
     seg_nocrop = ants.image_read(seg_nocrop)
-    prediction = join(data['path'][0], 'preprocessed', 'prediction.nii.gz')
+    seg_original = join(data['path'][0], 'seg.nii.gz')
+    seg_original = ants.image_read(seg_original)
+    prediction = join(data['path'][0], 'preprocessed', 'ensambled_output.nii.gz')
     prediction = ants.image_read(prediction)
-    #seg = join(data['path'][0], 'preprocessed', 'seg.nii.gz')
-    #seg = ants.image_read(seg)
+    # decrop prediction, then resample to original space
     prediction_nocrop = ants.decrop_image(prediction, seg_nocrop)
+    prediction_original = ants.resample_image(prediction_nocrop, seg_original, use_voxels=True, interp_type=1) # 0 = linear    
     # write prediction_cropped to file
-    ants.image_write(prediction_nocrop, join(data['path'][0], 'preprocessed', 'others', 'prediction_nocrop.nii.gz'))
+    ants.image_write(prediction_original, join(data['path'][0], 'prediction.nii.gz'))
 
 # Path to models and config
 # model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',

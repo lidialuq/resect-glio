@@ -157,11 +157,6 @@ def save_prediction(prediction, data, config, save_file_name='prediction.nii.gz'
         os.mkdir(subject_folder)
     # add back 0s to prediction to make it the same shape as original image (after resampling)
     prediction = torch.from_numpy(prediction).unsqueeze(0)
-    assert prediction.dim() == data['label'].dim(), 'Prediction and label needs to have the same dimensions'
-    print(data.keys())
-    print(data['foreground_start_coord'])
-    print(data['foreground_end_coord'])
-    prediction = invtrans_prediction(prediction, data)
     print(prediction.shape)
     '''
     orig_data = data['image'].cpu().detach().numpy().astype('float32')

@@ -11,12 +11,12 @@ import glob
 import os
 import shutil
 import ants
-from fsl.wrappers import fslreorient2std
 import subprocess
 from datetime import datetime
 from operator import itemgetter
 import sys
 import argparse
+import tqdm
 
 """ This script contains all functions needed to preprocess brain MRI by:
     -Reorienting to STD
@@ -165,8 +165,8 @@ print('\n' + '*'*120)
 print('Start preprocessing. This can take up to a few minutes per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
-for idx, study_folder in enumerate(study_folders):
-    print(f'{idx+1}/{len(study_folders)}: ' + study_folder)
+for study_folder in tqdm(study_folders):
+    print(study_folder)
     #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 
@@ -187,9 +187,9 @@ print('\n\n' + '*'*120)
 print('Apply brain mask from hd-bet to other sequences.')
 print('*'*120 + '\n')
 
-for idx, study_folder in enumerate(study_folders):
+for study_folder in tqdm(study_folders):
     if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
-        print(f'{idx+1}/{len(study_folders)}: ' + study_folder)
+        print(study_folder)
         move_to_others(study_folder)
         apply_mask(study_folder)
         cleanup(study_folder)

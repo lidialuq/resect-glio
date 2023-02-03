@@ -16,7 +16,7 @@ from datetime import datetime
 from operator import itemgetter
 import sys
 import argparse
-import tqdm
+from tqdm import tqdm
 
 """ This script contains all functions needed to preprocess brain MRI by:
     -Reorienting to STD

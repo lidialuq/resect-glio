@@ -165,8 +165,9 @@ print('\n' + '*'*120)
 print('Start preprocessing. This can take up to a few minutes per patient depending on the original resolution of the data.')
 print('*'*120 + '\n')
 
-for study_folder in tqdm(study_folders):
-    print(study_folder)
+pbar = tqdm(study_folders)
+for study_folder in pbar:
+    pbar.set_description(f"Processing {os.path.basename(study_folder)}")
     #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 

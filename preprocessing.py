@@ -190,7 +190,6 @@ print('*'*120 + '\n', flush=True)
 pbar = tqdm(study_folders)
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
-    print(study_folder)
     move_to_others(study_folder)
     apply_mask(study_folder)
     cleanup(study_folder)

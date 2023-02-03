@@ -168,7 +168,6 @@ print('*'*120 + '\n')
 pbar = tqdm(study_folders)
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
-    #fsl_reorient(study_folder)
     resample_coregister(study_folder)
 
 # Skull-stripping with hd-bet, including moving images to file format
@@ -190,9 +189,8 @@ print('*'*120 + '\n')
 
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
-    if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
-        print(study_folder)
-        move_to_others(study_folder)
-        apply_mask(study_folder)
-        cleanup(study_folder)
+    print(study_folder)
+    move_to_others(study_folder)
+    apply_mask(study_folder)
+    cleanup(study_folder)
 

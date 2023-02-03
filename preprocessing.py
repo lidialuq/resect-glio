@@ -156,7 +156,7 @@ def cleanup(study_folder):
 ############################################################################################
 
 study_folders = glob.glob(os.path.join(root, '*'))
-print(study_folders)
+study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
 
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 

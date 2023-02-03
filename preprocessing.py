@@ -187,6 +187,7 @@ print('\n\n' + '*'*120, flush=True)
 print('Apply brain mask from hd-bet to other sequences.', flush=True)
 print('*'*120 + '\n', flush=True)
 
+pbar = tqdm(study_folders)
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
     print(study_folder)

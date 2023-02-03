@@ -175,6 +175,7 @@ for study_folder in pbar:
 
 print('\n\n' + '*'*120)
 print('Start skull-stripping with HD-BET. This will take a few seconds per patient.')
+print('NOTE: Nothing will be printed to the screen while this is running. This can take up to 20min per 100 patients.')
 print('*'*120 + '\n')
 
 move_T1_bet('move', root)
@@ -193,4 +194,6 @@ for study_folder in pbar:
     move_to_others(study_folder)
     apply_mask(study_folder)
     cleanup(study_folder)
+
+print('\n\n', flush=True)
 

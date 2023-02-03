@@ -273,8 +273,9 @@ print('Starting inference')
 print('*'*120 + '\n')
 
 # Do inference
-for data in tqdm(test_loader):
-    print(data['subject'][0])
+pbar = tqdm(test_loader)
+for data in pbar:
+    pbar.set_description(f"Processing {data['subject'][0]}")
     prediction, _ = infer_one_with_ensable(models, data, config)
     # save prediction in resamples space
     save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')

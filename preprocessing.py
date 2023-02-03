@@ -188,7 +188,8 @@ print('\n\n' + '*'*120)
 print('Apply brain mask from hd-bet to other sequences.')
 print('*'*120 + '\n')
 
-for study_folder in tqdm(study_folders):
+for study_folder in pbar:
+    pbar.set_description(f"Processing {os.path.basename(study_folder)}")
     if not os.path.exists(os.path.join(study_folder, 't1_brain.nii.gz')):
         print(study_folder)
         move_to_others(study_folder)

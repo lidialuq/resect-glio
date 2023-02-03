@@ -267,10 +267,10 @@ metrics_dic = {'volume_label': list(),
                 'hd95_resampled': list(),
                 'subject': list()}
 
-print('Done')
-print('\n' + '*'*120)
-print('Starting inference')
-print('*'*120 + '\n')
+print('Done', flush=True)
+print('\n' + '*'*120, flush=True)
+print('Starting inference', flush=True)
+print('*'*120 + '\n', flush=True)
 
 # Do inference
 pbar = tqdm(test_loader)

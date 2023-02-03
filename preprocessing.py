@@ -161,9 +161,9 @@ study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
 
-print('\n' + '*'*120)
-print('Start preprocessing. This can take up to a few minutes per patient depending on the original resolution of the data.')
-print('*'*120 + '\n')
+print('\n' + '*'*120, flush=True)
+print('Start preprocessing. This can take up to a few minutes per patient depending on the original resolution of the data.', flush=True)
+print('*'*120 + '\n', flush=True)
 
 pbar = tqdm(study_folders)
 for study_folder in pbar:
@@ -183,9 +183,9 @@ move_T1_bet('unmove', root)
 
 # Apply brain mask from hd-bet to other sequences
 
-print('\n\n' + '*'*120)
-print('Apply brain mask from hd-bet to other sequences.')
-print('*'*120 + '\n')
+print('\n\n' + '*'*120, flush=True)
+print('Apply brain mask from hd-bet to other sequences.', flush=True)
+print('*'*120 + '\n', flush=True)
 
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")

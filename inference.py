@@ -289,6 +289,5 @@ for data in pbar:
 # Save metrics
 with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
     pickle.dump(metrics_dic, f)
-print(metrics_dic)
 
         

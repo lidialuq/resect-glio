@@ -14,7 +14,6 @@ import ants
 import subprocess
 from datetime import datetime
 from operator import itemgetter
-import sys
 import argparse
 from tqdm import tqdm
 
@@ -25,9 +24,16 @@ from tqdm import tqdm
     -Corregistering (affine)
     -Skull-stripping using hd-bet
 """
+parser = argparse.ArgumentParser()
+parser.add_argument('-ground_truth', type=bool, default=False)
+gt_available = parser.parse_args().ground_truth
+
 root = '/mnt'
 scans = ['t1ce', 't1', 'flair', 't2']
-scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
+if gt_available:
+    scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
+else:
+    scans_seg = scans
             
 # Bias correction, resample and co-register
 def resample_coregister(study_folder):
@@ -49,25 +55,21 @@ def resample_coregister(study_folder):
     ouput_path = os.path.join(study_folder, 'preprocessed', f'{scans[0]}.nii.gz')
     ants.image_write(niis[0], ouput_path)
 
-    # resample segmentation without registration
-    nii = os.path.join(study_folder, 'seg.nii.gz')
-    nii = ants.image_read(nii)
-    nii = ants.resample_image(nii,(1,1,1),False,1)
-    ouput_path = os.path.join(study_folder, 'preprocessed', f'seg.nii.gz')
-    ants.image_write(nii, ouput_path)
-    
+    if gt_available:
+        # resample gt segmentation without registration
+        nii = os.path.join(study_folder, 'seg.nii.gz')
+        nii = ants.image_read(nii)
+        nii = ants.resample_image(nii,(1,1,1),False,1)
+        ouput_path = os.path.join(study_folder, 'preprocessed', f'seg.nii.gz')
+        ants.image_write(nii, ouput_path)
+        
     
 def move_T1_bet(mode, root):
     """"Use to skullstrip using hd-bet. Mode must be either move or unmove. 
     On move mode, moves all T1 files for all patients and in all study folders 
     in root to a tmp folder in root called tmp_bet/i. In unmove mode, moves 
     files back, and also moves files created by hd-bet to a folder called 
-    others in the study folder. Usage:
-        -From this script, run move_T1_bet('move', root) (root should be in NAS)
-        -ssh to miniserver2-0.local
-        -conda activate pytorch
-        -hd-bet -i [root]/tmp_bet/i -o [root]/tmp_bet/o -device [int]
-        -From this script, run move_T1_bet('unmove', root) 
+    others in the study folder. 
     """    
     study_folders = glob.glob(os.path.join(root, '*'))
     study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
@@ -153,6 +155,7 @@ def cleanup(study_folder):
     for file in files:
         if not file.endswith('seg_nocrop.nii.gz'):
             os.remove(file)
+
 ############################################################################################
 
 study_folders = glob.glob(os.path.join(root, '*'))
@@ -195,5 +198,4 @@ for study_folder in pbar:
     apply_mask(study_folder)
     cleanup(study_folder)
 
-print('\n\n', flush=True)
 

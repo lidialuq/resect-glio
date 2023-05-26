@@ -13,7 +13,7 @@ from monai.transforms import MapTransform
 Transforms, who would have guessed.
 """
 
-classes = ['enhancing'] #['edema', "enhancing"], ["edema"]
+classes = ['enhancing'] #['edema', "enhancing"]
 
 class ConvertToMultiChannel(MapTransform):
     """
@@ -30,6 +30,8 @@ class ConvertToMultiChannel(MapTransform):
             if classes == ["enhancing"]:
                 result.append(d[key] == 0)  # background
                 result.append(d[key] == 1)  # add enhancing
+            else:
+                print("Error: transform only implemented for one class.")
             d[key] = torch.stack(result, axis=0).type(torch.HalfTensor)
         return d
 

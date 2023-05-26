@@ -35,15 +35,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-batch_size', type=int, default=4)
 parser.add_argument('-num_workers', type=int, default=4)
 parser.add_argument('-device', type=str, default='cuda:0')
+parser.add_argument('-ground_truth', type=bool, default=False)
 
 batch_size = parser.parse_args().batch_size
 num_workers = parser.parse_args().num_workers
 device = parser.parse_args().device
+gt_available = parser.parse_args().ground_truth
 
 '''
-Predict on Brainpower using an ensamble of 5 supervised or semi-supervised models.
-Make sure that the output_classses are the same as the ones used for training, for example:
-output_classes = ['edema', 'enhancing'] means edema=1 and enhancing=2 in the prediction. Background is 0.
+Get predictions using an ensamble of 5 supervised or semi-supervised models.
+If ground truth segmentation is available, compute metrics.
 '''
 
 
@@ -220,12 +221,6 @@ def calculate_metrics(data, resampled, metrics):
     
     return metrics
 
-# Path to models and config
-# model_path = ['/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k0/2022-11-29/epoch_1000/checkpoint-epoch1000.pth',
-#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k1/2022-12-01/epoch_1000/checkpoint-epoch1000.pth',
-#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k2/2022-12-02/epoch_1000/checkpoint-epoch1000.pth',
-#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k3/2022-12-03/epoch_1000/checkpoint-epoch1000.pth',
-#                 '/mnt/CRAI-NAS/all/lidfer/Segmentering/BrainpowerSemisup/saved_models/semisup_97_kX/semisup_97_k4/2022-12-05/epoch_1000/checkpoint-epoch1000.pth']
 
 model_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
              '/opt/seg-pipeline/models/semisup_97_k1.pth',
@@ -239,7 +234,6 @@ config = {'device': torch.device(device),
           'output_path': '/mnt',
           'input_path': '/mnt',
           'out_channels': 2,
-          'label': True,
          }    
 if not os.path.exists(config['output_path']):
     os.mkdir(config['output_path'])
@@ -251,7 +245,7 @@ print('*'*120 + '\n')
 
 # Load dataset
 transform = get_transforms(label=False)
-test_ds = GbmDataset(config['input_path'], label=config['label'], transform=transform, input=config['sequences'])
+test_ds = GbmDataset(config['input_path'], label=gt_available, transform=transform, input=config['sequences'])
 test_loader = DataLoader(test_ds, batch_size=1, num_workers=num_workers)    
 
 # Load models
@@ -281,13 +275,14 @@ for data in pbar:
     save_prediction(prediction, data, config, save_file_name='prediction.nii.gz')
     # save prediction in original space
     prediction_to_original_space(data)
-    # get metrics
-    metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
-    metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
-    metrics_dic['subject'].append(data['subject'][0])
+    # get metrics if ground truth is provided
+    if gt_available:
+        metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
+        metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
+        metrics_dic['subject'].append(data['subject'][0])
 
-    # Save metrics
-    with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
-        pickle.dump(metrics_dic, f)
+        # Save metrics
+        with open(join(config['output_path'], 'test_metrics.pth'), 'wb') as f:
+            pickle.dump(metrics_dic, f)
 
         

@@ -6,13 +6,13 @@ import monai.transforms as trans
 from monai.transforms.utils import allow_missing_keys_mode
 from .transforms import ConvertToMultiChannel
 
+"""
+Put together al transforms 
+"""
 
 def get_transforms(label=True):
-    """ Get the transform for the dataset and split.
-    dataset: str, name of the dataset: 'brainpower', 'brats', 'sailor' or 'embrace'
-    split: str, name of the split: 'train', 'val' or 'infer'
+    """ Choose transforms according to label availability
     label: bool, whether to transform the label
-    resample: bool, whether to resample the image
     """
 
     # label vs no label 

@@ -15,12 +15,12 @@ from torch.utils.data import Dataset
 class GbmDataset(Dataset):
     """Make dataset for BraTS dataset 2021"""
 
-    def __init__(self, root_dir, label='True', transform=None, 
+    def __init__(self, root_dir, label='False', transform=None, 
                 input=['t1', 't1ce', 'flair', 't2']):
         """
         Args:
-            root (string): Directory containing all subjects
-            mode (string): 'val' or 'infer', if 'val' then label is returned
+            root_dir (string): Directory containing all subjects
+            label (bool): Whether to ground truth label is available
             transform (callable, optional): Optional transform to be applied
                 on a sample.
             input (list): Which sequences to use as input, must be a list of strings
@@ -52,19 +52,18 @@ class GbmDataset(Dataset):
         image = np.stack(image, axis=0)
         image = torch.from_numpy(image)
         
-        # load label into one tensor of shape (H,W,D)
-        label = nii = nib.load(os.path.join(self.root, self.subjects[idx], 'preprocessed', f'seg.nii.gz'))  
-        label = torch.from_numpy(nii.get_fdata())
-        
-        # make dictionary and transform
+        # make dictionary and apply transforms
         if self.label:
+            # load label into one tensor of shape (H,W,D)
+            label = nii = nib.load(os.path.join(self.root, self.subjects[idx], 'preprocessed', f'seg.nii.gz'))  
+            label = torch.from_numpy(nii.get_fdata())
             sample = {'image': image, 'label': label, 'subject': self.subjects[idx], 
                     'path': os.path.join(self.root, self.subjects[idx])}
-        elif self.mode == 'infer':
+        else:
             sample = {'image': image, 'subject': self.subjects[idx],
                     'path': os.path.join(self.root, self.subjects[idx])}
-        if self.transform:
 
+        if self.transform:
             sample = self.transform(sample)
 
         return sample

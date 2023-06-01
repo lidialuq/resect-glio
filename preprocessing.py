@@ -24,19 +24,19 @@ from tqdm import tqdm
     -Corregistering (affine)
     -Skull-stripping using hd-bet
 """
-parser = argparse.ArgumentParser()
-parser.add_argument('-ground_truth', type=bool, default=False)
-gt_available = parser.parse_args().ground_truth
 
-root = '/mnt'
-scans = ['t1ce', 't1', 'flair', 't2']
-if gt_available:
-    scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
-else:
-    scans_seg = scans
-            
-# Bias correction, resample and co-register
-def resample_coregister(study_folder):
+
+def is_gt_available(study_folders):
+    """Check if ground truth segmentations are available 
+    """
+    for study_folder in study_folders:
+        if not os.path.exists(os.path.join(study_folder, 'seg.nii.gz')):
+            return False
+    return True
+
+
+def resample_coregister(study_folder, scans, gt_available):
+    """Bias correction, resample and co-registration"""
     if not os.path.exists(os.path.join(study_folder, 'preprocessed')):
         os.mkdir(os.path.join(study_folder, 'preprocessed'))
     niis = []
@@ -120,7 +120,7 @@ def call_hdbet(folder):
     if error: 
         print(error.decode('ascii'))
 
-def move_to_others(study_folder):
+def move_to_others(study_folder, scans_seg):
     """Move non skull-stripped files to others folder to make place for skull
     stripped"""
     for seq in scans_seg: 
@@ -131,7 +131,7 @@ def move_to_others(study_folder):
     dst = os.path.join(study_folder, 'preprocessed', 't1.nii.gz')
     os.rename(src, dst)               
     
-def apply_mask(study_folder):
+def apply_mask(study_folder, scans_seg):
     """ Skull-strip by appling mask created by hd-bet"""
     mask = os.path.join(study_folder, 'preprocessed', 'others', 't1_mask.nii.gz')
     mask = ants.image_read(mask)
@@ -158,8 +158,17 @@ def cleanup(study_folder):
 
 ############################################################################################
 
+root = '/mnt'
 study_folders = glob.glob(os.path.join(root, '*'))
 study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
+scans = ['t1ce', 't1', 'flair', 't2']
+
+# If ground truth is available for every study, metrics will be calculated. 
+gt_available = is_gt_available(study_folders)
+if gt_available:
+    scans_seg = ['t1ce', 't1', 'flair', 't2', 'seg']
+else:
+    scans_seg = scans
 
 # Do all preprocessing but skull-stripping
 # This takes ca 5.5 min per study_folder if 3D, about a minute otherwise. 
@@ -171,7 +180,7 @@ print('*'*120 + '\n', flush=True)
 pbar = tqdm(study_folders)
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
-    resample_coregister(study_folder)
+    resample_coregister(study_folder, scans, gt_available)
 
 # Skull-stripping with hd-bet, including moving images to file format
 # that hd-bet can read (and back)
@@ -194,8 +203,8 @@ print('*'*120 + '\n', flush=True)
 pbar = tqdm(study_folders)
 for study_folder in pbar:
     pbar.set_description(f"Processing {os.path.basename(study_folder)}")
-    move_to_others(study_folder)
-    apply_mask(study_folder)
+    move_to_others(study_folder, scans_seg)
+    apply_mask(study_folder, scans_seg)
     cleanup(study_folder)
 
 

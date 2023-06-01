@@ -29,18 +29,7 @@ from monai import metrics
 from helpers.transforms_config import get_transforms
 from helpers.dataloader import GbmDataset
 from helpers.network import Network
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-batch_size', type=int, default=4)
-parser.add_argument('-num_workers', type=int, default=4)
-parser.add_argument('-device', type=str, default='cuda:0')
-parser.add_argument('-ground_truth', type=bool, default=False)
-
-batch_size = parser.parse_args().batch_size
-num_workers = parser.parse_args().num_workers
-device = parser.parse_args().device
-gt_available = parser.parse_args().ground_truth
+from preprocessing import is_gt_available
 
 '''
 Get predictions using an ensamble of 5 supervised or semi-supervised models.
@@ -98,7 +87,7 @@ def infer_one_with_ensable(models: list, data: dict, config: dict) -> list:
             shape is (x,y,z) for both
     """
     # usefull definitions
-    inferer = SlidingWindowInferer((128,128,128), sw_batch_size=batch_size, overlap=0.25, mode='gaussian')
+    inferer = SlidingWindowInferer((128,128,128), sw_batch_size=config['batch_size'], overlap=0.25, mode='gaussian')
     softmax = Softmax(dim=1)
     # do inference for all models, then ensable
     input_volume = data["image"].to(config['device'])
@@ -221,6 +210,20 @@ def calculate_metrics(data, resampled, metrics):
     
     return metrics
 
+############################################################################################
+root = '/mnt'
+study_folders = glob.glob(os.path.join(root, '*'))
+study_folders = [folder for folder in study_folders if os.path.isdir(folder)]
+
+# The parser isn't used in the docker container
+parser = argparse.ArgumentParser()
+parser.add_argument('-batch_size', type=int, default=4)
+parser.add_argument('-num_workers', type=int, default=4)
+parser.add_argument('-device', type=str, default='cuda:0')
+parser.add_argument('-ground_truth', type=bool, default=False)
+batch_size = parser.parse_args().batch_size
+num_workers = parser.parse_args().num_workers
+device = parser.parse_args().device
 
 model_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
              '/opt/seg-pipeline/models/semisup_97_k1.pth',
@@ -231,13 +234,16 @@ model_path = ['/opt/seg-pipeline/models/semisup_97_k0.pth',
 config = {'device': torch.device(device),
           'semisup': True, 
           'sequences': ['t1', 't1ce', 'flair', 't2'],
-          'output_path': '/mnt',
-          'input_path': '/mnt',
+          'output_path': root,
+          'input_path': root,
           'out_channels': 2,
+          'batch_size': batch_size,
+          'num_workers': num_workers,
+          'gt_available': is_gt_available(study_folders),
          }    
+
 if not os.path.exists(config['output_path']):
     os.mkdir(config['output_path'])
-
 
 print('\n' + '*'*120)
 print('Creating datasets and loading models')
@@ -245,8 +251,8 @@ print('*'*120 + '\n')
 
 # Load dataset
 transform = get_transforms(label=False)
-test_ds = GbmDataset(config['input_path'], label=gt_available, transform=transform, input=config['sequences'])
-test_loader = DataLoader(test_ds, batch_size=1, num_workers=num_workers)    
+test_ds = GbmDataset(config['input_path'], label=config['gt_available'], transform=transform, input=config['sequences'])
+test_loader = DataLoader(test_ds, batch_size=1, num_workers=config['num_workers'])    
 
 # Load models
 models = load_models(model_path, config)
@@ -276,7 +282,7 @@ for data in pbar:
     # save prediction in original space
     prediction_to_original_space(data)
     # get metrics if ground truth is provided
-    if gt_available:
+    if config['gt_available']:
         metrics_dic = calculate_metrics(data, resampled=False, metrics=metrics_dic)
         metrics_dic = calculate_metrics(data, resampled=True, metrics=metrics_dic)
         metrics_dic['subject'].append(data['subject'][0])
